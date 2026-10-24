@@ -1,0 +1,13 @@
+{
+  "name": "silver-scan",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Silver Scan — BTCS L1 block explorer frontend",
+  "scripts": {
+    "build": "echo 'No build step needed; static assets served from app/static/'",
+    "deploy": "wrangler pages deploy app/static --project-name silver-scan"
+  },
+  "devDependencies": {
+    "wrangler": "^4.152.0"
+  }
+}

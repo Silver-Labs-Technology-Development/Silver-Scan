@@ -1,0 +1,9 @@
+# Silver Scan — Cloudflare Pages configuration
+# Deploys the static frontend (HTML/CSS/JS) to Cloudflare Pages.
+# The Python API backend (app/main.py) must run separately (not on Pages).
+
+name = "silver-scan"
+compatibility_date = "2026-10-24"
+
+[pages]
+pages_dir = "app/static"
