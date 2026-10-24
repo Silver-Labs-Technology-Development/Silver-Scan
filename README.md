@@ -58,7 +58,7 @@ deployment.
 - Default branch: `main`
 - Implementation: none
 - Tests run: none (no code)
-- License: no license selected; no reuse rights are granted
+- License: proprietary; all rights reserved (see `LICENSE`); no reuse rights are granted
 - Visibility: public planning repository
 
 This repository is labeled planned so that its existence is not mistaken for a
