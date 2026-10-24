@@ -1,5 +1,10 @@
 # Silver Scan architecture
 
+> **Status: candidate design note.** The scope and decisions in
+> [`README.md`](../README.md) remain authoritative. This document does not
+> authorize implementation.
+
+
 This document describes the intended explorer and indexing boundary. It is a
 design note, not a description of running software.
 

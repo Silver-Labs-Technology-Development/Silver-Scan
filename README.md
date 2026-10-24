@@ -1,81 +1,68 @@
 # Silver Scan
 
-Blockchain explorer and indexing services for BTCS L1 and BTCS L2.
-
-**Status: planned — scaffold only.** No indexer, database schema, API, or web UI
-exists in this repository yet. Silver Scan defines the explorer boundary; it
-does not replace a node or become a second source of consensus truth.
+> **Status: Planned — repository and scope only.**
+> No explorer, indexer, database, API, or web interface exists here.
 
 ## Purpose
 
-Make BTCS L1 and L2 activity searchable and explainable. A user should be able
-to look up a block, transaction, address, token transfer, or L2 contract and
-see a derived view that clearly states its source, confirmation state, and
-limitations.
+Silver Scan is the blockchain explorer and indexing product boundary for Silver
+Labs. It is intended to make BTCS L1 and BTCS L2 activity inspectable without
+requiring users to run a node or read raw RPC responses.
 
-## Scope
+Silver Scan is independent of the BTCS L2 Studio's bounded local views. A
+Studio view is not an indexer, an address-history service, or a
+reorganization-aware explorer.
 
-Planned work, in dependency order:
+## Proposed scope
 
-1. **L1 ingester** — follow BTCS Core blocks, transactions, and reorgs.
-2. **L2 ingester** — follow BTCS L2 EVM blocks, transactions, receipts, logs,
-   and token transfers.
-3. **Canonicality** — track the active chain, record reorgs, and expose
-   confirmation counts instead of pretending a block is final.
-4. **Index store** — normalized tables for blocks, transactions, addresses,
-   token transfers, and contracts, with idempotent ingestion.
-5. **Query API** — paginated read-only endpoints for search and entity pages.
-6. **Web UI** — block, transaction, address, token, and contract views with
-   explicit status labels.
-7. **Operations** — backfill, reindex, health checks, metrics, and a documented
-   recovery procedure.
+- Index blocks, transactions, receipts, and address activity.
+- Separate chain adapters for BTCS L1 and BTCS L2.
+- Token and NFT event indexing after the relevant standards are finalized.
+- Reorganization detection, rollback, and canonical-chain labeling.
+- Bounded read APIs with pagination and explicit freshness metadata.
+- A web interface that labels local, testnet, and experimental networks.
 
-## Out of scope
+## Explicitly out of scope until reviewed and approved
 
-- Custody, signing, trading, or payment processing.
-- Consensus changes or block validation.
-- Replacing BTCS Core or BTCS L2 RPC as the authority.
-- Guessing missing data or presenting an indexer result as final settlement.
-
-## Planned components
-
-| Component | Responsibility | Depends on |
-| --- | --- | --- |
-| `ingest-l1/` | L1 block and transaction ingestion | BTCS Core RPC |
-| `ingest-l2/` | L2 EVM block, receipt, and log ingestion | BTCS L2 RPC |
-| `indexer/` | Canonicality, reorg handling, backfill | Both ingesters |
-| `store/` | Schema, migrations, idempotent writes | PostgreSQL or SQLite |
-| `api/` | Read-only search and entity endpoints | `store/` |
-| `web/` | Explorer UI | `api/` |
-
-The directory names are proposed. They are not created yet.
+- Claims of complete address history or guaranteed finality.
+- Custody, signing, or transaction submission.
+- Public production endpoints without operations and abuse controls.
+- Treating an indexed view as consensus proof.
 
 ## Integration points
 
-- [btcs-core](https://github.com/Silver-Labs-Technology-Development/Silver-Labs-Bitcoin-Silver-Development)
-  — L1 blocks, transactions, and chain state.
-- [btcs-l2](https://github.com/Silver-Labs-Technology-Development/btcs-l2)
-  — L2 EVM blocks, receipts, logs, and settlement records.
-- [silver-labs-platform](https://github.com/Silver-Labs-Technology-Development/silver-labs-platform)
-  — shared read client and schemas where they fit.
-- [SilverPay](https://github.com/Silver-Labs-Technology-Development/SilverPay)
-  and [SilverForge-Studio](https://github.com/Silver-Labs-Technology-Development/SilverForge-Studio)
-  — deep links to transactions, tokens, and contracts.
+- **BTCS Core** — L1 blocks, transactions, and chain state.
+- **BTCS L2** — execution blocks, receipts, and settlement records.
+- **silver-labs-platform** — network identity and schema contracts.
+- **SilverPay / SilverForge** — display links and asset metadata, not authority.
+- **SilvEx DEX Node** — shared indexing boundaries where responsibilities
+  overlap.
 
-## Local development
+## Decisions required before implementation
 
-There is no runnable code yet. The intended development loop is a disposable
-BTCS Core regtest node plus a disposable BTCS L2 dev node, both indexed into a
-local database. Development defaults must bind to loopback.
+1. Initial chain coverage and whether L1 and L2 share one data model.
+2. Database, retention, reindexing, and backup policy.
+3. Reorganization depth and user-visible confirmation semantics.
+4. API limits, caching, and abuse controls.
+5. Which token/NFT standards are actually supported.
 
-## Safety and release status
+## First milestone
 
-This is a development scaffold with no implementation or audit. An explorer is
-a derived view: label confirmations, reorgs, and unavailable data explicitly.
-Never commit node cookies, wallet data, `.env` files, or a production database
-dump.
+A local indexer for one chain with deterministic fixture replay, a documented
+reorganization test, and a read-only block/transaction view. No production
+deployment.
 
-See [`SECURITY.md`](SECURITY.md).
+## Repository facts
+
+- Local workspace path: `~/Silver-Labs/Silver-Scan`
+- Default branch: `main`
+- Implementation: none
+- Tests run: none (no code)
+- License: no license selected; no reuse rights are granted
+- Visibility: public planning repository
+
+This repository is labeled planned so that its existence is not mistaken for a
+working explorer.
 
 ## Repository layout
 
@@ -89,13 +76,18 @@ See [`SECURITY.md`](SECURITY.md).
     └── ARCHITECTURE.md
 ```
 
+## Architecture note
+
+[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) records a candidate component
+breakdown and threat model. It is subordinate to the scope and decisions above
+and does not authorize implementation.
+
+## Security
+
+See [`SECURITY.md`](SECURITY.md) for the reporting policy and security
+boundaries. No implementation, test suite, or independent audit exists yet.
+
 ## License
 
 No open-source license is granted. See [`LICENSE`](LICENSE). The repository is
 public for review and development, not for reuse or redistribution.
-
-## Related repositories
-
-- [BTCS Core](https://github.com/Silver-Labs-Technology-Development/Silver-Labs-Bitcoin-Silver-Development)
-- [BTCS L2](https://github.com/Silver-Labs-Technology-Development/btcs-l2)
-- [Silver Labs workspace](https://github.com/orgs/Silver-Labs-Technology-Development/repositories)
