@@ -91,3 +91,19 @@ boundaries. No implementation, test suite, or independent audit exists yet.
 
 No open-source license is granted. See [`LICENSE`](LICENSE). The repository is
 public for review and development, not for reuse or redistribution.
+
+
+## Running Silver Scan (developer)
+
+```bash
+cp .env.example .env
+python3 -m app.main
+```
+
+Open http://127.0.0.1:8000
+
+Tests:
+```bash
+python3 -m pytest tests/ -v
+python3 -m compileall app tests
+```

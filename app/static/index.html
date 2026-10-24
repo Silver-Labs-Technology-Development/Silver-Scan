@@ -1,0 +1,74 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Silver Scan</title>
+<style>
+body{font-family:system-ui,sans-serif;background:#0f0f10;color:#e8e8e8;margin:0}
+header{background:#1a1a1c;padding:16px;border-bottom:1px solid #333;position:sticky;top:0}
+main{padding:20px;max-width:1100px;margin:auto}
+.card{background:#18181a;border:1px solid #2a2a2c;border-radius:10px;padding:16px;margin:12px 0}
+input,select,button{padding:8px;border-radius:6px;border:1px solid #444;background:#222;color:#eee}
+button{cursor:pointer;background:#c0c0c0;color:#000;font-weight:600}
+table{width:100%;border-collapse:collapse}td,th{padding:8px;border-bottom:1px solid #2a2a2c;text-align:left;font-size:13px}
+a{color:#c0c0c0;cursor:pointer}
+pre{white-space:pre-wrap;word-break:break-all;font-size:12px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.stat{background:#222;padding:12px;border-radius:8px}
+.stat .v{font-size:20px;font-weight:700}
+</style></head><body>
+<header><div style="display:flex;gap:12px;align-items:center"><h1 style="margin:0;font-size:20px">Silver Scan</h1><span style="color:#888">Silver Labs explorer</span>
+<input id="q" placeholder="block height/hash, txid, address" style="flex:1">
+<button onclick="search()">Search</button>
+<select id="net"></select></div></header>
+<main id="view"></main>
+<script>
+async function api(p){const r=await fetch(p);if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.error||r.statusText);}return r.json();}
+async function loadNetworks(){const nets=await api('/api/networks');const s=document.getElementById('net');s.innerHTML=nets.map(n=>`<option value="${n.id}">${n.name}</option>`).join('');}
+function render(html){document.getElementById('view').innerHTML=html;}
+async function home(){
+  const n=document.getElementById('net').value;
+  const h=await api('/api/health?network='+n);
+  const bs=await api('/api/blocks/recent');
+  const st=await api('/api/index/status');
+  render(`<div class="card"><h2>Network status</h2><div class="grid">
+    <div class="stat"><div>Chain</div><div class="v">${h.chain}</div></div>
+    <div class="stat"><div>Height</div><div class="v">${h.blocks}</div></div>
+    <div class="stat"><div>Indexed tip</div><div class="v">${st.tip}</div></div>
+    <div class="stat"><div>Verification</div><div class="v">${(h.verificationProgress*100).toFixed(1)}%</div></div></div></div>
+    <div class="card"><h2>Latest blocks</h2><table><tr><th>Height</th><th>Hash</th><th>Txs</th><th>Time</th></tr>
+    ${bs.map(b=>`<tr><td><a onclick="openBlock('${b.height}')">${b.height}</a></td><td><a onclick="openBlock('${b.hash}')">${b.hash.slice(0,16)}…</a></td><td>${b.txCount}</td><td>${new Date(b.time*1000).toLocaleString()}</td></tr>`).join('')}</table></div>`);
+}
+async function openBlock(id){
+  const n=document.getElementById('net').value;
+  const b=await api('/api/block/'+id+'?network='+n);
+  const rows=(b.txids||[]).map(t=>`<tr><td><a onclick="openTx('${t}')">${t}</a></td></tr>`).join('');
+  render(`<div class="card"><h2>Block ${b.height}</h2><pre>${JSON.stringify(b,null,2)}</pre></div>
+    <div class="card"><h2>Transactions (${b.txCount})</h2><table><tr><th>Txid</th></tr>${rows}</table></div>
+    <button onclick="home()">Back</button>`);
+}
+async function openTx(id){
+  const t=await api('/api/tx/'+id);
+  render(`<div class="card"><h2>Transaction</h2><pre>${JSON.stringify(t,null,2)}</pre></div><button onclick="home()">Back</button>`);
+}
+async function openAddr(a){
+  const d=await api('/api/address/'+a);
+  const rows=(d.transactions||[]).map(t=>`<tr><td><a onclick="openTx('${t.txid}')">${t.txid}</a></td><td>${t.height}</td><td>${t.value||''}</td></tr>`).join('');
+  render(`<div class="card"><h2>Address ${a}</h2><div class="grid">
+    <div class="stat"><div>Balance</div><div class="v">${d.balance}</div></div>
+    <div class="stat"><div>Txs</div><div class="v">${d.txCount}</div></div></div>
+    <p style="color:#888">${d.note||''}</p></div>
+    <div class="card"><h2>Transactions</h2><table><tr><th>Txid</th><th>Height</th><th>Value</th></tr>${rows}</table></div>
+    <button onclick="home()">Back</button>`);
+}
+async function search(){
+  const q=document.getElementById('q').value.trim();
+  const n=document.getElementById('net').value;
+  try{
+    if(/^\d+$/.test(q)){ openBlock(q); return; }
+    if(q.length===64){
+      try{ await openTx(q); return; }catch(e){}
+      try{ openBlock(q); return; }catch(e){}
+    }
+    // try address
+    openAddr(q);
+  }catch(e){ alert(e.message); }
+}
+loadNetworks().then(()=>{document.getElementById('net').addEventListener('change',home);home();});
+</script></body></html>
