@@ -23,6 +23,8 @@ from app import coverage as C
 from app import pool_registry as P
 from app import accounts as U
 from app import pool_market as PM
+from app import livecoinwatch as LCW
+from app import source_status as SS
 
 STATIC = Path(__file__).resolve().parent / "static"
 HEX_HASH = re.compile(r"^[0-9a-fA-F]{64}$")
@@ -214,6 +216,14 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/api/catalog/search":
             self._send(200, C.cg_catalog_search((query.get("q") or [""])[0],
                 self._query_int(query, "limit", 20, 1, 40)))
+            return
+        if path == "/api/sources/status":
+            self._send(200, SS.providers())
+            return
+        if path == "/api/livecoinwatch/markets":
+            self._send(200, LCW.market_page(
+                self._query_int(query, "page", 1, 1, 500),
+                self._query_int(query, "limit", 50, 25, 200)))
             return
         if path == "/api/catalog/page":
             self._send(200, C.cg_market_page(
