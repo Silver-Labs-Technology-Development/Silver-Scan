@@ -46,7 +46,7 @@ class Handler(BaseHTTPRequestHandler):
             self.send_header(
                 "Content-Security-Policy",
                 "default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; "
-                "connect-src 'self'; img-src 'self' data: https://coin-images.coingecko.com https://assets.coingecko.com; base-uri 'none'; "
+                "connect-src 'self'; img-src 'self' data: https://coin-images.coingecko.com https://assets.coingecko.com https://www.coindesk.com https://www.coindeskcdn.com https://cdn.sanity.io https://cointelegraph.com https://decrypt.co https://www.theblock.co https://bitcoinmagazine.com https://www.bitcoinmagazine.com https://*.btcinc.com; base-uri 'none'; "
                 "form-action 'self'; frame-ancestors 'none'",
             )
         self.end_headers()
@@ -133,8 +133,14 @@ class Handler(BaseHTTPRequestHandler):
         if path in ("/", "/index.html"):
             self._static("index.html", "text/html; charset=utf-8")
             return
+        if path == "/feature-detail.html":
+            self._static("feature-detail.html", "text/html; charset=utf-8")
+            return
         if path in ("/insights.html", "/compare.html"):
             self._static(path.lstrip("/"), "text/html; charset=utf-8")
+            return
+        if path == "/feature-detail.js":
+            self._static("feature-detail.js", "application/javascript; charset=utf-8")
             return
         if path in ("/insights.js", "/compare.js"):
             self._static(path.lstrip("/"), "application/javascript; charset=utf-8")
