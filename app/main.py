@@ -148,6 +148,9 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/legacy-hub.js":
             self._static("legacy-hub.js", "application/javascript; charset=utf-8")
             return
+        if path == "/portfolio.js":
+            self._static("portfolio.js", "application/javascript; charset=utf-8")
+            return
         if path == "/theme.js":
             self._static("theme.js", "application/javascript; charset=utf-8")
             return
