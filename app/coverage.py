@@ -163,6 +163,7 @@ def cg_market_page(page=1,limit=100):
                        "change_24h_pct":_numeric(item.get("price_change_percentage_24h")),
                        "source":"CoinGecko","market_status":"provider-reported-volume"})
     return {"source":"CoinGecko","page":page,"limit":limit,"assets":values,
+            "provider_rows":len(raw),"has_more":len(raw)==limit,
             "fetched_at":ts,"stale":stale,
             "note":"Only rows reporting positive 24h volume and price. Price/volume can be stale or inaccurate."}
 
@@ -232,6 +233,7 @@ def cmc_active(page=1,limit=100):
                        "change_24h_pct":_numeric(quote_usd.get("percent_change_24h")),
                        "source":"CoinMarketCap","market_status":"provider-reported-volume"})
     return {"source":"CoinMarketCap","page":page,"limit":limit,"assets":assets,
+            "provider_rows":len(raw["data"]),"has_more":len(raw["data"])==limit,
             "fetched_at":ts,"stale":stale,"api_mode":"authenticated" if key else "keyless-public",
             "note":"Active provider listings with reported volume; visibility and permitted commercial use depend on your CMC plan."}
 
@@ -255,6 +257,7 @@ def coinbase_pairs(offset=0,limit=100):
                       "source":"Coinbase Advanced Trade","status":item.get("status")})
     return {"source":"Coinbase Advanced Trade","fetched_at":ts,"stale":stale,
             "pairs":pairs,"offset":offset,"limit":limit,
+            "provider_rows":len(raw["products"]),"has_more":len(raw["products"])==limit,
             "note":"Coinbase exchange products, not unique coin counts, global prices, or all-world availability."}
 
 
