@@ -372,6 +372,102 @@ def news(limit=20):
             "note":"Publisher RSS headlines, optional publisher-supplied thumbnails and favicons only; full articles remain at the original source. Images can be unavailable."}
 
 
+def cg_trending():
+    """Trending searches, not investment recommendations or verified listings."""
+    def load():
+        value=_fetch(CG+"/search/trending")
+        if not isinstance(value,dict) or not isinstance(value.get("coins"),list):
+            raise M.ProviderUnavailable("Trending feed unavailable")
+        return value
+    raw,ts,stale=_memo("cg:discover:trending:v1",load,600,1800)
+    coins=[]
+    for entry in raw["coins"][:30]:
+        item=entry.get("item") if isinstance(entry,dict) else None
+        if not isinstance(item,dict) or not isinstance(item.get("id"),str) or not _ID.fullmatch(item["id"]):
+            continue
+        coins.append({"id":"coingecko:"+item["id"],"provider_id":item["id"],
+                      "name":str(item.get("name") or "")[:120],
+                      "symbol":str(item.get("symbol") or "")[:30],
+                      "rank":item.get("market_cap_rank"),
+                      "icon":M._coin_image(item.get("thumb")),
+                      "market_status":"trending-search-unverified"})
+    return {"source":"CoinGecko /search/trending","coins":coins,
+            "fetched_at":ts,"stale":stale,
+            "note":"Provider trending searches, not market rankings, buy signals, or independently verified tokens."}
+
+
+def cg_categories(limit=35):
+    """Provider category market-cap rankings, with source-observed daily change."""
+    if type(limit) is not int or not 1<=limit<=50:
+        raise ValueError("limit must be 1–50")
+    def load():
+        value=_fetch(CG+"/coins/categories?"+urlencode({"order":"market_cap_desc"}))
+        if not isinstance(value,list):raise M.ProviderUnavailable("Category feed unavailable")
+        return value
+    raw,ts,stale=_memo("cg:discover:categories:v1",load,900,3600)
+    items=[]
+    for category in raw[:limit]:
+        if not isinstance(category,dict) or not isinstance(category.get("id"),str):continue
+        items.append({"id":category["id"][:100],"name":str(category.get("name") or "")[:140],
+                      "market_cap_usd":_numeric(category.get("market_cap")),
+                      "change_24h_pct":_numeric(category.get("market_cap_change_24h")),
+                      "volume_24h_usd":_numeric(category.get("volume_24h")),
+                      "updated_at":category.get("updated_at")})
+    return {"source":"CoinGecko /coins/categories","categories":items,
+            "fetched_at":ts,"stale":stale,
+            "note":"Provider-defined sector categories; categories overlap and are not additive, and rankings may change."}
+
+
+def cg_exchanges(page=1,limit=30):
+    """Read-only exchange overview; trust scores are CoinGecko definitions."""
+    if type(page) is not int or not 1<=page<=20:
+        raise ValueError("page must be 1–20")
+    if type(limit) is not int or not 1<=limit<=50:
+        raise ValueError("limit must be 1–50")
+    def load():
+        value=_fetch(CG+"/exchanges?"+urlencode({"per_page":limit,"page":page}))
+        if not isinstance(value,list):raise M.ProviderUnavailable("Exchange feed unavailable")
+        return value
+    raw,ts,stale=_memo(f"cg:discover:exchanges:{page}:{limit}",load,900,3600)
+    items=[]
+    for exchange in raw:
+        if not isinstance(exchange,dict) or not isinstance(exchange.get("id"),str):continue
+        website=exchange.get("url")
+        parts=urlsplit(website) if isinstance(website,str) and len(website)<700 else None
+        if parts and (parts.scheme!="https" or not parts.hostname or parts.username or parts.password):
+            website=None
+        items.append({"id":exchange["id"][:120],
+                      "name":str(exchange.get("name") or "")[:120],
+                      "country":str(exchange.get("country") or "")[:100],
+                      "year_established":exchange.get("year_established") if type(exchange.get("year_established")) is int else None,
+                      "rank":exchange.get("trust_score_rank") if type(exchange.get("trust_score_rank")) is int else None,
+                      "trust_score":_numeric(exchange.get("trust_score")),
+                      "trade_volume_24h_btc":_numeric(exchange.get("trade_volume_24h_btc")),
+                      "website":website})
+    return {"source":"CoinGecko /exchanges","exchanges":items,"page":page,
+            "has_more":len(raw)==limit,"fetched_at":ts,"stale":stale,
+            "note":"External exchange information, not Silver Labs recommendations, a safety certification, or SilvEx trade volume."}
+
+
+def cg_defi():
+    """Global DeFi reference statistics supplied by CoinGecko."""
+    def load():
+        value=_fetch(CG+"/global/decentralized_finance_defi")
+        if not isinstance(value,dict) or not isinstance(value.get("data"),dict):
+            raise M.ProviderUnavailable("DeFi global data unavailable")
+        return value
+    raw,ts,stale=_memo("cg:discover:defi:v1",load,600,2400)
+    item=raw["data"]
+    return {"source":"CoinGecko /global/decentralized_finance_defi",
+            "market_cap_usd":_numeric(item.get("defi_market_cap")),
+            "volume_24h_usd":_numeric(item.get("trading_volume_24h")),
+            "dominance_pct":_numeric(item.get("defi_dominance")),
+            "defi_to_eth_ratio_pct":_numeric(item.get("defi_to_eth_ratio")),
+            "top_coin_name":str(item.get("top_coin_name") or "")[:120],
+            "fetched_at":ts,"stale":stale,
+            "note":"Global provider DeFi estimates and asset categories change over time."}
+
+
 def mining_estimate(inputs):
     """Simple expected-value calculator; requires explicit user-provided assumptions."""
     names=("miner_hashrate_hps","network_hashrate_hps","block_reward","blocks_per_day",
