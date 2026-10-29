@@ -6,6 +6,19 @@ SilverScan is an independent Silver Labs product, separate from any explorer
 owned by the Bitcoin Silver organization. It combines a BTCS L1 block explorer
 prototype with a developing multi-coin market research terminal.
 
+## Existing Cloudflare Workers service: `silver-scan`
+
+**The actual user-provided dashboard URL is for Cloudflare Workers, not Pages.**
+Use the existing Worker named `silver-scan` and the production branch
+`public-alpha`. The Workers-specific configuration in
+[`wrangler.worker.toml`](wrangler.worker.toml) provides static assets, a
+restricted Cloudflare API and server-side `ASSETS` binding. See
+[`docs/CLOUDFLARE-WORKERS-ALPHA.md`](docs/CLOUDFLARE-WORKERS-ALPHA.md)
+for GitHub connection, build command, security verification and monitoring.
+
+The older Pages configuration remains separate; **do not create a duplicate
+Pages project** when releasing to the existing Worker.
+
 ## Cloudflare public viewing alpha
 
 The intended Cloudflare Pages production branch is **`public-alpha`**,
