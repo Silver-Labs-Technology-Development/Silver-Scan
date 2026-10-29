@@ -125,6 +125,43 @@ async function loreMarkets(url,forceFirst=false){
     stale:false,note:'Live CoinLore market observations. Coins with missing/zero prices or volume are excluded. Not an independently validated universal token index.'
   };
 }
+async function loreSearch(url){
+  const query=(url.searchParams.get('q')||'').trim().toLowerCase();
+  if(query.length<2||query.length>70||/[<>]/.test(query))throw Error('Search term must be 2–70 characters');
+  const limit=clampedInt(url.searchParams.get('limit'),30,1,50);
+  // CoinLore's dedicated lightweight catalogue includes unpriced/unranked
+  // assets; results never imply a live market without a separate quote.
+  const raw=await upstream(LORE+'/assets/',{},6000000);
+  const list=Array.isArray(raw?.data)?raw.data:Array.isArray(raw)?raw:[];
+  if(!list.length)throw Error('CoinLore asset catalog unavailable');
+  const matches=list.filter(item=>item&&/^[0-9]{1,18}$/.test(String(item.id||''))&&(
+    String(item.name||'').toLowerCase().includes(query)||
+    String(item.symbol||'').toLowerCase()===query||
+    String(item.nameid||'').toLowerCase().includes(query)
+  )).slice(0,limit).map(item=>({
+    id:'coinlore:'+item.id,provider_id:String(item.id),
+    name:String(item.name||'').slice(0,120),symbol:String(item.symbol||'').slice(0,30),
+    rank:loreNumber(item.rank),price_usd:null,volume_24h_usd:null,
+    market_status:'catalog-discovery-only'
+  }));
+  return {source:'CoinLore asset catalog',matches,catalog_count:list.length,
+    fetched_at:Math.floor(Date.now()/1000),stale:false,
+    note:'Catalog IDs do not guarantee active trading; quoted prices must be requested separately.'};
+}
+async function loreQuotes(url){
+  const ids=(url.searchParams.get('ids')||'').split(',');
+  if(!ids.length||ids.length>50||ids.some(x=>!/^[0-9]{1,18}$/.test(x)))throw Error('Supply 1–50 distinct CoinLore IDs');
+  const unique=[...new Set(ids)];
+  const rows=[];
+  for(let index=0;index<unique.length;index+=15){
+    const data=await upstream(LORE+'/ticker/?id='+unique.slice(index,index+15).join(','),{},950000);
+    if(!Array.isArray(data))throw Error('CoinLore quote response invalid');
+    rows.push(...data);
+  }
+  return {source:'CoinLore /ticker',assets:rows.map(loreAsset).filter(Boolean),
+    fetched_at:Math.floor(Date.now()/1000),stale:false,
+    note:'Current provider quotes. Missing prices do not erase saved watchlist IDs.'};
+}
 async function loreGlobal(){
   const raw=await upstream(LORE+'/global/',{},250000);
   const item=Array.isArray(raw)?raw[0]:null;
@@ -285,6 +322,8 @@ export default {
       if(path==="/api/market/global")return json(cgEnabled(env)?await globalMarket(env):await loreGlobal());
       if(path==="/api/coinlore/markets")return json(await loreMarkets(url));
       if(path==="/api/coinlore/quote")return json(await loreQuote(url));
+      if(path==="/api/coinlore/search")return json(await loreSearch(url));
+      if(path==="/api/coinlore/quotes")return json(await loreQuotes(url));
       if(path==="/api/markets")return json(cgEnabled(env)?await markets(url,env,true):await loreMarkets(url,true));
       if(path==="/api/catalog/page")return json(cgEnabled(env)?await markets(url,env):await loreMarkets(url));
       if(path==="/api/coin-watch/quotes")return json(await quotes(url,env));
