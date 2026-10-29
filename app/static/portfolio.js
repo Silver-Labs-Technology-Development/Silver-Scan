@@ -2,6 +2,9 @@
    Quantities are user statements, never verified balances or wallet holdings.
    No API credentials, secrets, private keys, or passwords in localStorage. */
 (() => {
+  // Public alpha never attempts password, login, or account-write requests.
+  // This SQLite-backed prototype is available only on localhost previews.
+  if (!["localhost","127.0.0.1","::1"].includes(location.hostname)) return;
   const $ = id => document.getElementById(id);
   const make = (tag, text, cls) => {
     const node = document.createElement(tag);
