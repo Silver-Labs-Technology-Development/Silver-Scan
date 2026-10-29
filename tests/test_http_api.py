@@ -72,6 +72,19 @@ def api_server(tmp_path, monkeypatch):
     monkeypatch.setattr(coverage, "coinbase_pairs", lambda offset, limit: {
         "source": "Coinbase Advanced Trade", "offset": offset, "pairs": [],
     })
+    monkeypatch.setattr(coverage, "cg_trending", lambda: {
+        "source": "CoinGecko /search/trending", "coins": [],
+    })
+    monkeypatch.setattr(coverage, "cg_categories", lambda limit: {
+        "source": "CoinGecko /coins/categories", "categories": [],
+    })
+    monkeypatch.setattr(coverage, "cg_exchanges", lambda page, limit: {
+        "source": "CoinGecko /exchanges", "page": page, "exchanges": [],
+    })
+    monkeypatch.setattr(coverage, "cg_defi", lambda: {
+        "source": "CoinGecko /global/decentralized_finance_defi",
+        "market_cap_usd": None,
+    })
     monkeypatch.setattr(coverage, "news", lambda limit: {
         "source": "Publisher RSS feeds", "articles": [],
     })
@@ -122,6 +135,14 @@ def test_static_assets_are_served_and_safe(api_server):
         ("/mining.html", "text/html"),
         ("/theme.css", "text/css"),
         ("/theme.js", "application/javascript"),
+        ("/portfolio.js", "application/javascript"),
+        ("/insights.html", "text/html"),
+        ("/insights.js", "application/javascript"),
+        ("/compare.html", "text/html"),
+        ("/compare.js", "application/javascript"),
+        ("/feature-detail.html", "text/html"),
+        ("/feature-detail.js", "application/javascript"),
+
     ]:
         status, headers, body = request(api_server, path)
         assert status == 200
@@ -265,3 +286,17 @@ def test_silverscan_market_page_sizes_watch_quotes_and_pool_registry(api_server)
     assert status == 400 and "error" in missing
     status, _, too_many = data(api_server, "/api/coin-watch/quotes?ids=" + ",".join(["bitcoin"] * 51))
     assert status == 400 and "error" in too_many
+
+
+def test_insights_and_feature_preview_routes(api_server):
+    for path, source in [
+        ("/api/insights/trending", "CoinGecko /search/trending"),
+        ("/api/insights/categories", "CoinGecko /coins/categories"),
+        ("/api/insights/exchanges", "CoinGecko /exchanges"),
+        ("/api/insights/defi", "CoinGecko /global/decentralized_finance_defi"),
+    ]:
+        status, _, item = data(api_server, path)
+        assert status == 200 and item["source"] == source
+
+    status, _, error = data(api_server, "/api/insights/exchanges?page=0")
+    assert status == 400 and "error" in error
