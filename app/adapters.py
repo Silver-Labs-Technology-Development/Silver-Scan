@@ -8,7 +8,7 @@ class Network:
         return {"id": self.id, "name": self.name, "family": self.family, "capabilities": self.capabilities}
 
 NETWORKS = [
-    Network("btcs-regtest", "Bitcoin Silver (regtest)", "utxo", ["blocks","transactions","address","health","stats"]),
+    Network(f"btcs-{BTCS_NETWORK}", f"Bitcoin Silver ({BTCS_NETWORK})", "utxo", ["blocks","transactions","address","health","stats"]),
     Network("evm-demo", "EVM Demo (mock adapter)", "evm", ["blocks","transactions","address","contracts","tokens","health"]),
 ]
 

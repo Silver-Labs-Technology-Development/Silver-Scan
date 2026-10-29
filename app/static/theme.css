@@ -1,0 +1,202 @@
+/* SilverScan v2 contrast-checked theme tokens. Loaded after component CSS.
+   Avoid translucent content panels and maintain readable text in both modes. */
+html[data-theme=dark],:root:not([data-theme=light]){
+  --bg:#0e1e31;--panel:#1b344b;--panel-alt:#264259;
+  --text:#f1f7ff;--muted:#c4d5e5;--line:#527089;
+  --brand:#a2dcff;--brand-lite:#264a66;--accent:#a2dcff;
+  --gold:#a2dcff;--green:#8ee9c9;--red:#ffb0b5;
+  --shadow:0 10px 26px #06122040;
+  color-scheme:dark;
+}
+html[data-theme=light]{
+  --bg:#eaf3fb;--panel:#ffffff;--panel-alt:#e8f3fb;
+  --text:#153149;--muted:#4b657a;--line:#aac4d8;
+  --brand:#115b92;--brand-lite:#d9edfc;--accent:#115b92;
+  --gold:#115b92;--green:#126b4a;--red:#a82e45;
+  --shadow:0 9px 25px #103e5b1d;
+  color-scheme:light;
+}
+body{background:var(--bg);color:var(--text)}
+a{color:var(--brand)}
+button,select,input,textarea{color:var(--text)}
+:focus-visible{outline:3px solid var(--brand);outline-offset:3px}
+.site-header,.utility-bar,.nav-wrap{background:var(--panel);border-color:var(--line)}
+html[data-theme=light] .hub-header-note{color:var(--muted)}
+html[data-theme=light] .hub-home{color:var(--brand)}
+.brand,.brand-type strong,.brand-type small{color:var(--text)}
+.research-nav button,.research-nav a,.feature-link-nav{color:var(--muted)}
+.research-nav button.selected,.research-nav a[aria-current=page]{color:var(--brand);border-color:var(--brand)}
+.global-search,.explorer-search input,.hub-input input,.hub-select select,.hub-field input,.hub-panel,
+.hub-main-panel,.hub-side,.hub-calc,.hub-calc-output,.hub-story,.hub-source-cards article,
+.hub-quote-grid>div,.feature-count,.feature-card,.metric-card,.panel{
+  background:var(--panel)!important;border-color:var(--line)!important;color:var(--text)!important;
+}
+.hub-calc .hub-field input,.hub-select select,.hub-input input,.global-search input{
+  background:var(--panel-alt)!important;color:var(--text)!important;border-color:var(--line)!important;
+}
+.hub-table th,.hub-table td{border-bottom-color:var(--line);color:var(--text)}
+.hub-table th,.hub-meta,.hub-note,.hub-news-source,.hub-story small,
+.hub-panel-head span,.hub-mining-status,.hub-asset-cell small,
+.hub-calc-output>p,.hub-form-action p,.hub-source-cards article p,
+.hub-featured .hub-note,.hub-quote-grid small{color:var(--muted)}
+.hub-news-title,.hub-story .hub-news-title,.hub-source-cards h3,.hub-panel-head h3,
+.hub-side h3,.hub-calc-output h3,.hub-quote-grid strong,
+.hub-quote-grid>div strong{color:var(--text)}
+.hub-featured,.hub-hero,.scan-hub-promo,.hub-end{
+  background:linear-gradient(125deg,#153552,#22567c)!important;color:#f3faff!important;border-color:#5c94bd!important;
+}
+.hub-featured p,.hub-hero p,.hub-end p,.hub-featured h2,.hub-hero h1,.hub-end strong{color:#f3faff!important}
+.hub-featured .eyebrow,.hub-hero .eyebrow{color:#a9e2ff!important}
+.hub-featured button,.hub-actions button,.hub-head>button,.hub-input button,
+.hub-form-action button,.global-search button,.scan-hub-promo a{
+  background:#a6e0ff!important;color:#102a43!important;border-color:#a6e0ff!important;
+}
+.hub-featured button:hover,.hub-actions button:hover,.hub-head>button:hover,
+.hub-input button:hover,.hub-form-action button:hover{background:#d1f0ff!important}
+.hub-tabbar a,.feature-jump a,.hub-chip{background:var(--panel);color:var(--text);border-color:var(--line)}
+.hub-tabbar a:hover,.feature-jump a:hover{color:var(--brand);border-color:var(--brand)}
+.hub-featured #btcs-result .hub-quote-grid>div{background:#102c47!important;border-color:#5489ae!important}
+.hub-featured #btcs-result .hub-quote-grid small{color:#c7e0f3}
+.hub-featured #btcs-result .hub-quote-grid strong{color:#f3faff}
+.hub-error{background:#462b35;color:#ffe1e2;border-left:3px solid #ffb0b5}
+.hub-watch-star,.hub-estimate-link,#reload-watch,#refresh-mining,.hub-asset-action{
+  background:var(--brand-lite);color:var(--brand);border:1px solid var(--line);border-radius:8px;
+  padding:8px 11px;font-weight:800;cursor:pointer;
+}
+.hub-watch-star{font-size:17px;line-height:1.1}
+.hub-missing{margin-top:18px;border-top:1px solid var(--line);padding-top:16px}
+.hub-missing h3{font-size:14px}.hub-missing-row{display:flex;gap:15px;justify-content:space-between;align-items:center;margin:5px 0}
+.hub-missing-row code{overflow-wrap:anywhere}
+.hub-node-stats{margin-bottom:16px;padding:17px;border:1px solid var(--line);background:var(--panel-alt);border-radius:11px}
+.hub-node-stats h3{margin:0 0 6px;color:var(--text)}
+.hub-source-cards{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+.hub-source-cards .mining-coin h3{font-size:18px}
+.hub-source-cards .mining-coin .hub-mining-status{font-weight:750}
+.hub-source-cards .mining-coin a{display:inline-block;margin-bottom:12px}
+.hub-source-cards .mining-coin button{display:block;margin-top:auto}
+#watch-results{min-height:90px}
+.hub-story .hub-news-title:hover{color:var(--brand)}
+html[data-theme=light] .hub-hero,.hub-featured,.hub-end{color:#fff}
+html[data-theme=light] .hub-hero h1,html[data-theme=light] .hub-hero p{color:#fff}
+html[data-theme=light] .hub-featured code{color:#e4f4ff}
+html[data-theme=light] .hub-status{background:#11314c;border-color:#5c91b7;color:#effaff}
+html[data-theme=light] .hub-status strong,html[data-theme=light] .hub-status span,html[data-theme=light] .hub-status small{color:#eaf6ff}
+html[data-theme=light] .hub-footer,html[data-theme=light] .site-footer{background:#13324a;color:#eaf5ff}
+html[data-theme=light] .site-footer a,html[data-theme=light] .site-footer p,html[data-theme=light] .site-footer strong{color:#eaf5ff}
+html[data-theme=dark] .site-footer{background:#0b1b2d}
+html[data-theme=dark] .site-footer a,html[data-theme=dark] .site-footer strong{color:#dbefff}
+.theme-toggle{min-width:42px;min-height:40px;background:var(--panel-alt);color:var(--text);border:1px solid var(--line)}
+/* No low-contrast opacity on critical informational statuses. */
+.hub-mining-status,.hub-meta,.feature-status,.hub-note{opacity:1}
+
+/* Insights: sector performance, observed exchanges, trending lists, DeFi cards. */
+.insights-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px}
+.insights-grid>.hub-meta{grid-column:1/-1}
+.insight-card{display:flex;flex-direction:column;gap:10px;background:var(--panel);color:var(--text);padding:18px 19px;border:1px solid var(--line);border-radius:12px;min-height:160px}
+.insight-card h3{font-size:18px;margin:3px 0 0;color:var(--text);overflow-wrap:anywhere}
+.insight-card p{color:var(--muted);font-size:12px}
+.insight-card a{margin-top:auto;color:var(--brand);font-size:12px;font-weight:800}
+.insight-rank{font-size:10px;letter-spacing:.1em;color:var(--muted);font-weight:850}
+.insight-row{border-bottom:1px solid var(--line);display:grid;grid-template-columns:minmax(155px,2fr) repeat(3,minmax(100px,1fr));gap:13px;align-items:center;padding:15px 0;position:relative}
+.insight-row:last-of-type{border-bottom:0}
+.insight-row-name{display:flex;flex-direction:column;gap:3px;min-width:0}
+.insight-row-name strong{font-size:14px;color:var(--text)}
+.insight-row-name small{font-size:11px;color:var(--muted);overflow-wrap:anywhere}
+.insight-stat{display:flex;flex-direction:column;gap:5px;min-width:0}
+.insight-stat small{color:var(--muted);font-size:11px}
+.insight-stat strong{font-size:14px;color:var(--text);overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+.insight-change{grid-column:1/-1;width:100%;height:5px;border-radius:4px;background:var(--panel-alt);overflow:hidden}
+.insight-change-fill{height:100%;background:#60bfa2;border-radius:4px}
+.insight-change.change-down .insight-change-fill{background:#da7b80}
+#insights-defi .insight-stat{background:var(--panel);border:1px solid var(--line);padding:18px;border-radius:12px}
+#insights-defi .insight-stat strong{font-size:clamp(16px,2vw,23px)}
+#insights-defi>.hub-meta{grid-column:1/-1}
+.compare-table{margin:16px 0}
+.compare-bars{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin:23px 0}
+.compare-group{min-width:0;background:var(--panel-alt);padding:15px;border:1px solid var(--line);border-radius:10px}
+.compare-group h4{font-size:14px;margin:0 0 14px}
+.compare-bar-row{display:grid;grid-template-columns:minmax(55px,.5fr) minmax(75px,2fr) minmax(55px,.8fr);gap:10px;align-items:center;margin:10px 0}
+.compare-bar-row span{font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.compare-bar-row strong{font-size:11px;text-align:right;color:var(--text)}
+.compare-bar-track{height:11px;background:var(--panel);border:1px solid var(--line);border-radius:9px;overflow:hidden}
+.compare-bar-fill{height:100%;background:linear-gradient(90deg,#3e9edc,#a8dcff);border-radius:9px;min-width:0}
+#compare-form>button{align-self:end;border:1px solid #8ed2ff;background:#8fd2fc;color:#0b223b;font-size:12px;padding:11px 15px;border-radius:8px;font-weight:800}
+@media(max-width:940px){.insights-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.insight-row{grid-template-columns:minmax(155px,2fr) repeat(2,minmax(100px,1fr))}.insight-row .insight-stat:nth-of-type(4){grid-column:1/-1}.compare-bars{grid-template-columns:1fr}}
+@media(max-width:580px){.insights-grid{grid-template-columns:1fr}.insight-row{grid-template-columns:repeat(2,minmax(0,1fr))}.insight-row-name{grid-column:1/-1}.insight-row .insight-stat:nth-of-type(4){grid-column:auto}.compare-bar-row{grid-template-columns:50px minmax(65px,1fr) 70px}}
+
+/* Local account and manual asset portfolio in Coin Watch. */
+.account-auth-layout,.account-portfolio-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.account-auth-layout[hidden],#account-portfolio[hidden]{display:none!important}
+.account-form{display:flex;flex-direction:column;gap:11px}
+.account-form h3,.account-summary h3{font-size:19px;margin:0;color:var(--text)}
+.account-form p,.account-summary p{font-size:12px;line-height:1.7;color:var(--muted)}
+.account-form label{font-size:12px;font-weight:800;color:var(--text)}
+.account-form input{background:var(--panel-alt);border:1px solid var(--line);color:var(--text);border-radius:8px;padding:11px 13px;font-size:14px}
+.account-primary{background:#a6e0ff;color:#102a43;border:1px solid #a6e0ff;border-radius:9px;padding:11px 15px;font-size:13px;font-weight:850;cursor:pointer}
+.account-primary:hover{background:#d0f0ff}
+.account-primary:disabled{opacity:.6;cursor:wait}
+.account-session-strip{display:flex;gap:15px;align-items:center;justify-content:space-between;background:var(--panel-alt);padding:13px 20px;border:1px solid var(--line);border-radius:9px;margin-bottom:15px}
+.account-session-strip span{color:var(--text);font-size:13px;font-weight:750;overflow-wrap:anywhere}
+.account-summary{display:flex;flex-direction:column;gap:12px}
+.account-summary #portfolio-value{font-size:clamp(26px,3.3vw,42px);letter-spacing:-.04em;color:var(--text);overflow-wrap:anywhere}
+.account-summary #portfolio-coverage{font-size:12px;color:var(--muted)}
+.account-summary #portfolio-refresh{margin-top:auto;align-self:flex-start}
+#portfolio-rows{margin-top:16px;overflow-x:auto}
+.portfolio-holdings{display:flex;flex-direction:column}
+.portfolio-holding{display:grid;grid-template-columns:minmax(130px,1.6fr) minmax(100px,1fr) minmax(105px,1fr) auto;gap:15px;align-items:center;padding:15px 4px;border-bottom:1px solid var(--line)}
+.portfolio-holding:last-child{border-bottom:0}
+.portfolio-coin-name,.portfolio-coin-quantity,.portfolio-coin-value{display:flex;flex-direction:column;gap:5px;min-width:0}
+.portfolio-coin-name strong,.portfolio-coin-quantity strong,.portfolio-coin-value strong{color:var(--text);font-size:14px;overflow-wrap:anywhere}
+.portfolio-coin-name small,.portfolio-coin-quantity small,.portfolio-coin-value small{color:var(--muted);font-size:11px;overflow-wrap:anywhere}
+.portfolio-coin-actions{display:flex;gap:5px}
+.hub-portfolio-pick{display:inline-block;margin-left:5px;border:1px solid var(--line);border-radius:6px;background:var(--brand-lite);color:var(--brand);font-size:11px;font-weight:760;padding:5px 8px;cursor:pointer}
+.hub-portfolio-pick:hover,.hub-watch-star:hover{border-color:var(--brand)}
+#account-message:not(:empty){margin:10px 0 16px;padding:10px 13px}
+@media(max-width:790px){.account-auth-layout,.account-portfolio-grid{grid-template-columns:1fr}.portfolio-holding{grid-template-columns:1fr 1fr}.portfolio-coin-actions{grid-column:1/-1}}
+@media(max-width:500px){.portfolio-holding{grid-template-columns:1fr}.portfolio-coin-actions{grid-column:1/-1}}
+
+/* Shared integration-preview skeleton. Never display placeholder numerical data. */
+.feature-skeleton{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin:5px 0 22px;max-width:950px}
+.feature-skeleton-line{height:85px;background:repeating-linear-gradient(100deg,var(--panel-alt),var(--panel-alt) 18px,var(--panel) 19px,var(--panel) 50px);border:1px solid var(--line);border-radius:11px}
+.feature-skeleton-graphic{grid-column:1/-1;min-height:155px;border:1px dashed var(--line);border-radius:11px;background:linear-gradient(180deg,var(--panel-alt),var(--panel));position:relative;overflow:hidden}
+.feature-skeleton-graphic:after{content:"INTERFACE PREVIEW — DATA NOT CONNECTED";position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:15px;color:var(--muted);font-size:12px;font-weight:800;letter-spacing:.08em}
+.feature-skeleton-graphic:before{content:"";position:absolute;inset:25px 15px 25px;border-bottom:2px dashed var(--line);border-left:2px dashed var(--line)}
+@media(max-width:600px){.feature-skeleton{grid-template-columns:1fr}.feature-skeleton-graphic{grid-column:auto}}
+
+/* Universal blockchain explorer: clearly differentiated chain families. */
+.universal-network-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.universal-chain-card{display:flex;flex-direction:column;align-items:flex-start;gap:8px;text-align:left;padding:17px 18px;background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:12px;min-height:130px;cursor:pointer}
+.universal-chain-card:hover,.universal-chain-card:focus-visible{border-color:var(--brand);background:var(--panel-alt)}
+.universal-chain-card strong{font-size:16px;color:var(--text)}
+.universal-chain-card small{font-size:11px;color:var(--muted)}
+.universal-chain-ready,.universal-chain-unconfigured{margin-top:auto;font-size:10px;font-weight:850;letter-spacing:.04em}
+.universal-chain-ready{color:var(--brand)}.universal-chain-unconfigured{color:var(--muted)}
+.universal-form{align-items:end;display:grid;grid-template-columns:minmax(140px,1fr) minmax(140px,1fr) minmax(240px,2fr) auto;gap:15px}
+.universal-form .hub-field{min-width:0}
+.universal-form input,.universal-form select{width:100%;min-height:43px;padding:11px 12px;border:1px solid var(--line);border-radius:9px;background:var(--panel-alt);color:var(--text)}
+.universal-form .account-primary{min-height:43px}
+.universal-disclaimer{color:var(--muted);font-size:12px;padding:13px 2px 16px}
+.universal-results{padding:23px}
+.universal-result-head{display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap;margin-bottom:16px}
+.universal-result-head h3{margin:5px 0;font-size:24px;color:var(--text)}
+.universal-summary{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:9px 17px}
+.universal-detail-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 24px}
+.universal-detail-pair{border-bottom:1px solid var(--line);padding:14px 0;min-width:0}
+.universal-detail-pair dt{font-size:11px;color:var(--muted);font-weight:760;margin-bottom:8px}
+.universal-detail-pair dd{color:var(--text);overflow-wrap:anywhere;margin:0;font-size:13px;font-variant-numeric:tabular-nums}
+.universal-subsection{margin:20px 0;padding:17px;border:1px solid var(--line);border-radius:10px;background:var(--panel-alt)}
+.universal-subsection h4{color:var(--text);font-size:15px;margin:0 0 12px}
+.universal-signatures{display:flex;flex-direction:column;gap:7px}
+.universal-signature{border:1px solid var(--line);color:var(--brand);background:var(--panel);border-radius:7px;text-align:left;padding:10px;font-size:11px;overflow-wrap:anywhere;cursor:pointer}
+.universal-signature:hover{border-color:var(--brand)}
+@media(max-width:1100px){.universal-network-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.universal-form{grid-template-columns:repeat(2,minmax(0,1fr))}.universal-form .universal-query{grid-column:1/-1}.universal-form>button{grid-column:1/-1}}
+@media(max-width:700px){.universal-network-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.universal-detail-list{grid-template-columns:1fr}}
+@media(max-width:490px){.universal-network-grid{grid-template-columns:1fr}.universal-form{grid-template-columns:1fr}.universal-form .universal-query,.universal-form>button{grid-column:auto}}
+
+/* Public Alpha branding, never obscure navigation and never fake completeness. */
+.public-alpha-banner{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:10px 15px;padding:12px 20px;background:#184567;color:#f1f9ff;border-bottom:1px solid #79b6db;font-size:12px;line-height:1.5;text-align:center}
+.public-alpha-banner strong{font-size:10px;letter-spacing:.12em;border:1px solid #a8dcfb;border-radius:20px;padding:4px 9px;color:#f8fbff}
+.public-alpha-banner span{max-width:1050px}
+html[data-theme=light] .public-alpha-banner{background:#dceffc;color:#103653;border-color:#729fbf}
+html[data-theme=light] .public-alpha-banner strong{color:#103653;border-color:#477d9f}
+.alpha-account-disabled{padding:15px;border:1px solid var(--line);border-left:4px solid var(--brand);background:var(--panel-alt);border-radius:7px;color:var(--text)!important}

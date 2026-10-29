@@ -1,0 +1,4 @@
+# Worker source is server-side code, never a public static downloadable asset.
+_worker.js
+# Cloudflare Processes _headers automatically for static-asset response rules.
+# Keep _headers in asset folder; it is not served directly.

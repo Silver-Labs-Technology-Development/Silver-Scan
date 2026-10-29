@@ -1,74 +1,129 @@
-<!doctype html><html><head><meta charset="utf-8"><title>Silver Scan</title>
-<style>
-body{font-family:system-ui,sans-serif;background:#0f0f10;color:#e8e8e8;margin:0}
-header{background:#1a1a1c;padding:16px;border-bottom:1px solid #333;position:sticky;top:0}
-main{padding:20px;max-width:1100px;margin:auto}
-.card{background:#18181a;border:1px solid #2a2a2c;border-radius:10px;padding:16px;margin:12px 0}
-input,select,button{padding:8px;border-radius:6px;border:1px solid #444;background:#222;color:#eee}
-button{cursor:pointer;background:#c0c0c0;color:#000;font-weight:600}
-table{width:100%;border-collapse:collapse}td,th{padding:8px;border-bottom:1px solid #2a2a2c;text-align:left;font-size:13px}
-a{color:#c0c0c0;cursor:pointer}
-pre{white-space:pre-wrap;word-break:break-all;font-size:12px}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
-.stat{background:#222;padding:12px;border-radius:8px}
-.stat .v{font-size:20px;font-weight:700}
-</style></head><body>
-<header><div style="display:flex;gap:12px;align-items:center"><h1 style="margin:0;font-size:20px">Silver Scan</h1><span style="color:#888">Silver Labs explorer</span>
-<input id="q" placeholder="block height/hash, txid, address" style="flex:1">
-<button onclick="search()">Search</button>
-<select id="net"></select></div></header>
-<main id="view"></main>
-<script>
-async function api(p){const r=await fetch(p);if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.error||r.statusText);}return r.json();}
-async function loadNetworks(){const nets=await api('/api/networks');const s=document.getElementById('net');s.innerHTML=nets.map(n=>`<option value="${n.id}">${n.name}</option>`).join('');}
-function render(html){document.getElementById('view').innerHTML=html;}
-async function home(){
-  const n=document.getElementById('net').value;
-  const h=await api('/api/health?network='+n);
-  const bs=await api('/api/blocks/recent');
-  const st=await api('/api/index/status');
-  render(`<div class="card"><h2>Network status</h2><div class="grid">
-    <div class="stat"><div>Chain</div><div class="v">${h.chain}</div></div>
-    <div class="stat"><div>Height</div><div class="v">${h.blocks}</div></div>
-    <div class="stat"><div>Indexed tip</div><div class="v">${st.tip}</div></div>
-    <div class="stat"><div>Verification</div><div class="v">${(h.verificationProgress*100).toFixed(1)}%</div></div></div></div>
-    <div class="card"><h2>Latest blocks</h2><table><tr><th>Height</th><th>Hash</th><th>Txs</th><th>Time</th></tr>
-    ${bs.map(b=>`<tr><td><a onclick="openBlock('${b.height}')">${b.height}</a></td><td><a onclick="openBlock('${b.hash}')">${b.hash.slice(0,16)}…</a></td><td>${b.txCount}</td><td>${new Date(b.time*1000).toLocaleString()}</td></tr>`).join('')}</table></div>`);
-}
-async function openBlock(id){
-  const n=document.getElementById('net').value;
-  const b=await api('/api/block/'+id+'?network='+n);
-  const rows=(b.txids||[]).map(t=>`<tr><td><a onclick="openTx('${t}')">${t}</a></td></tr>`).join('');
-  render(`<div class="card"><h2>Block ${b.height}</h2><pre>${JSON.stringify(b,null,2)}</pre></div>
-    <div class="card"><h2>Transactions (${b.txCount})</h2><table><tr><th>Txid</th></tr>${rows}</table></div>
-    <button onclick="home()">Back</button>`);
-}
-async function openTx(id){
-  const t=await api('/api/tx/'+id);
-  render(`<div class="card"><h2>Transaction</h2><pre>${JSON.stringify(t,null,2)}</pre></div><button onclick="home()">Back</button>`);
-}
-async function openAddr(a){
-  const d=await api('/api/address/'+a);
-  const rows=(d.transactions||[]).map(t=>`<tr><td><a onclick="openTx('${t.txid}')">${t.txid}</a></td><td>${t.height}</td><td>${t.value||''}</td></tr>`).join('');
-  render(`<div class="card"><h2>Address ${a}</h2><div class="grid">
-    <div class="stat"><div>Balance</div><div class="v">${d.balance}</div></div>
-    <div class="stat"><div>Txs</div><div class="v">${d.txCount}</div></div></div>
-    <p style="color:#888">${d.note||''}</p></div>
-    <div class="card"><h2>Transactions</h2><table><tr><th>Txid</th><th>Height</th><th>Value</th></tr>${rows}</table></div>
-    <button onclick="home()">Back</button>`);
-}
-async function search(){
-  const q=document.getElementById('q').value.trim();
-  const n=document.getElementById('net').value;
-  try{
-    if(/^\d+$/.test(q)){ openBlock(q); return; }
-    if(q.length===64){
-      try{ await openTx(q); return; }catch(e){}
-      try{ openBlock(q); return; }catch(e){}
-    }
-    // try address
-    openAddr(q);
-  }catch(e){ alert(e.message); }
-}
-loadNetworks().then(()=>{document.getElementById('net').addEventListener('change',home);home();});
-</script></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0e1e31">
+  <meta name="description" content="SilverScan: cryptocurrency prices, real market charts, coin research, Bitcoin Silver mining data and blockchain exploration.">
+  <title>SilverScan | Crypto Markets, Mining & Blockchain Explorer</title>
+  <link rel="stylesheet" href="./styles.css">
+  <script type="module" src="./explorer.js"></script>
+  <script type="module" src="./research.js"></script>
+<link rel="stylesheet" href="./theme.css"><script src="./alpha.js" defer></script></head>
+<body>
+  <a class="skip-link" href="#research-view">Skip to main content</a>
+  <div class="utility-bar">
+    <div class="shell utility-inner">
+      <div class="utility-stats" aria-label="Crypto market totals">
+        <span>Cryptocurrencies <strong id="market-coins">—</strong></span>
+        <span>Market Cap <strong id="market-cap-top">—</strong></span>
+        <span>24h Volume <strong id="market-volume-top">—</strong></span>
+        <span>BTC Dominance <strong id="market-btc-top">—</strong></span>
+      </div>
+      <span class="utility-source" id="market-source-top">Data: CoinGecko · loading</span>
+    </div>
+  </div>
+  <header class="site-header">
+    <div class="shell header-main">
+      <a class="brand" href="./" aria-label="SilverScan homepage">
+        <span class="brand-mark" aria-hidden="true"><span>S</span></span>
+        <span class="brand-type"><strong>SILVER<span>SCAN</span></strong><small>CRYPTO INTELLIGENCE · SILVER LABS</small></span>
+      </a>
+      <form id="global-search-form" class="global-search" role="search">
+        <label class="sr-only" for="global-search">Search cryptocurrencies</label>
+        <span aria-hidden="true" class="search-icon">⌕</span>
+        <input type="search" id="global-search" autocomplete="off" placeholder="Search coins, tickers and market data..." maxlength="100">
+        <kbd>/</kbd>
+        <button type="submit">Search</button>
+      </form>
+      <div class="header-actions">
+        <span class="currency-pill" title="Market prices are shown in US dollars">USD</span>
+        <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Switch to dark theme" title="Toggle color theme">◐</button>
+      </div>
+    </div>
+    <div class="nav-wrap">
+      <nav class="shell research-nav" aria-label="SilverScan sections">
+        <button type="button" data-tab="markets" class="selected" aria-pressed="true">Markets</button>
+        <a href="./coin-watch.html">Coin Watch</a>
+        <button type="button" data-tab="heatmap" aria-pressed="false">Heatmap</button>
+        <a href="./news.html">Crypto News</a>
+        <a href="./mining.html">Mining &amp; ROI</a>
+        <button type="button" data-tab="dex" aria-pressed="false">DEX Scan</button>
+        <a href="./universal-explorer.html">Universal Explorer</a><button type="button" data-tab="explorer" aria-pressed="false">BTCS L1</button>
+        <a href="./insights.html">Market Insights</a><a href="./compare.html">Compare Coins</a><a href="./features.html">All Features</a>
+      </nav>
+    </div>
+  </header>
+  <div class="shell workspace">
+    <div class="page-intro" id="page-intro">
+      <div>
+        <div class="section-kicker"><span class="status-indicator"></span> SILVERSCAN / RESEARCH CENTER</div>
+        <h1 id="page-title">Cryptocurrency Prices by Market Cap</h1>
+        <p id="page-description" class="muted">Research markets and blockchain activity across multiple providers. <a href="./coin-watch.html">Explore low-ranked coins and tokens, including BTCS →</a></p>
+      </div>
+      <div class="intro-side"><span class="tiny-label">SELECTED MARKET FEED</span><strong id="data-state">Connecting to providers</strong><small id="last-updated">Updated: —</small></div>
+    </div>
+    <section class="provider-board" aria-labelledby="providers-heading">
+      <div class="provider-board-head">
+        <div><h2 id="providers-heading">Market Data Sources</h2>
+          <p>Five independent feeds in one workspace. Activity is measured per provider; coverage counts are not added together or treated as verified unique coins.</p></div>
+        <button id="refresh-sources" type="button" class="provider-refresh">Refresh connection status</button>
+      </div>
+      <div id="sources-status" class="provider-grid" aria-live="polite">
+        <p class="hub-note">Checking backend source configuration and recent observations…</p>
+      </div>
+      <p class="provider-disclaimer">CoinGecko supplies this page's global market totals and visual charts. CoinMarketCap and LiveCoinWatch can supply separate market rankings; Coinbase supplies trading pairs; MiningPoolStats supplies pool information only when an authorized dataset is connected. <a href="./coin-watch.html">Explore other assets in Coin Watch →</a></p>
+    </section>
+    <section id="market-overview" class="market-overview" aria-label="Global market statistics">
+      <div class="metric-card">
+        <span class="metric-label">Global Market Cap</span>
+        <strong id="metric-cap">—</strong>
+        <span id="metric-cap-change" class="metric-sub">Awaiting provider</span>
+      </div>
+      <div class="metric-card">
+        <span class="metric-label">24h Trading Volume</span>
+        <strong id="metric-volume">—</strong>
+        <span class="metric-sub">Aggregated external markets</span>
+      </div>
+      <div class="metric-card">
+        <span class="metric-label">Bitcoin Dominance</span>
+        <strong id="metric-btc">—</strong>
+        <span class="metric-sub">Share of market capitalization</span>
+      </div>
+      <div class="metric-card">
+        <span class="metric-label">Tracked Cryptocurrencies</span>
+        <strong id="metric-coins">—</strong>
+        <span class="metric-sub">Reported by data provider</span>
+      </div>
+    </section>
+    <section id="explorer-controls" class="explorer-controls" hidden aria-label="Explorer search">
+      <form id="explorer-search" class="explorer-search">
+        <label for="q">Explore Bitcoin Silver L1</label>
+        <div class="explorer-input">
+          <input id="q" name="q" required maxlength="128" autocomplete="off" placeholder="Search block height, block hash, transaction ID or address">
+          <button type="submit">Search chain</button>
+        </div>
+      </form>
+      <div class="network-pick"><label for="net">Network</label><select id="net"><option>Loading networks…</option></select></div>
+    </section>
+    <main id="research-view" aria-live="polite">
+      <div class="loading-panel">Loading market data…</div>
+    </main>
+    <main id="view" hidden aria-live="polite"><div class="loading-panel">Checking node connection…</div></main>
+    <div class="scan-hub-promo"><div><p class="eyebrow">DISCOVER MORE</p><h2>Beyond market-cap rankings.</h2><p>Bitcoin Silver is available by unique CoinGecko ID even when it ranks outside the first thousand. Search the full catalog, browse CoinMarketCap markets, Coinbase spot pairs, read crypto news and compare mining assumptions.</p></div><a href="./coin-watch.html">Explore Coin Watch →</a></div><div class="data-disclaimer">
+      <strong>SilverScan is an independent Silver Labs product.</strong> Prices and DEX data are attributed external research, not SilvEx trades. The BTCS L1 explorer is a node-backed development implementation. Market listing does not verify token legitimacy or promise trading, mining rewards, settlement or custody.
+    </div>
+  </div>
+  <footer class="site-footer">
+    <div class="shell footer-content">
+      <div><strong>SILVERSCAN</strong><p>One research workspace. Multiple networks. Verifiable sources.</p></div>
+      <div class="footer-links">
+        <a href="https://github.com/Silver-Labs-Technology-Development/Silver-Scan" target="_blank" rel="noopener noreferrer">Source & roadmap</a>
+        <a href="https://www.coingecko.com/" target="_blank" rel="noopener noreferrer">Market data: CoinGecko</a>
+        <a href="./coin-watch.html">News &amp; Coin Universe</a>
+        <a href="https://dexscreener.com/" target="_blank" rel="noopener noreferrer">DEX data: DEX Screener</a>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>
