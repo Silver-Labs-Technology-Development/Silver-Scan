@@ -181,12 +181,26 @@ def session(token: str | None):
         return dict(row) if row else None
 
 
+def rotate_csrf(token, user):
+    if user is None or not isinstance(token, str):
+        raise PermissionError("Sign in required")
+    csrf = secrets.token_urlsafe(32)
+    with _ACCOUNT_LOCK, _db() as conn:
+        conn.execute("UPDATE sessions SET csrf_hash=? WHERE token_hash=? AND user_id=?",
+                     (_digest(csrf), _digest(token), user["id"]))
+    return csrf
+
+
 def require_csrf(user, value):
     if user is None:
         raise PermissionError("Sign in required")
     if not isinstance(value, str) or len(value) > 128:
         raise PermissionError("Missing or invalid CSRF token")
-    if not hmac.compare_digest(_digest(value), user["csrf_hash"]):
+    try:
+        digest = _digest(value)
+    except (UnicodeEncodeError, ValueError) as exc:
+        raise PermissionError("Missing or invalid CSRF token") from exc
+    if not hmac.compare_digest(digest, user["csrf_hash"]):
         raise PermissionError("Missing or invalid CSRF token")
 
 
