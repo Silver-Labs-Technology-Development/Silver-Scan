@@ -80,6 +80,7 @@ function status(message,data=null){
 }
 const titles={
   markets:['Cryptocurrency Prices by Market Cap','Track cryptocurrency prices, global statistics, seven-day trends, market sentiment and detailed asset research.'],
+  heatmap:['Coin Performance Heatmap','Top-100 cryptocurrency performance and market-cap sizes using real CoinGecko snapshot data.'],
   watch:['Coin Watch','Your saved coins, private to this browser. Market coverage depends on the data provider.'],
   mining:['Mining & Pool Intelligence','Verified Bitcoin Silver node metrics and independent references for other mining networks.'],
   dex:['DEX Scan','Discover token pairs, liquidity and DEX activity. Results are external observations, not verified listings.'],
@@ -110,6 +111,7 @@ function switchTab(tab){
   setText('page-title',title);setText('page-description',description);
   status(tab==='explorer'?'Node-backed information':'Provider-backed market data');
   if(tab==='markets'||tab==='watch')loadMarket();
+  else if(tab==='heatmap')loadHeatmap();
   else if(tab==='dex')renderDex();
   else if(tab==='mining')renderMining();
   if(location.hash!=='#'+tab)history.replaceState(null,'','#'+tab);
@@ -303,6 +305,54 @@ async function loadMarket(){
     renderMarketHome();
   }catch(error){status('Market source unavailable');display(errorMessage(error.message+' · No illustrative market numbers will be shown.'));}
 }
+function renderHeatmap(){
+  const data=state.market;
+  if(!data||!Array.isArray(data.assets)){
+    display(errorMessage('Coin performance heatmap is unavailable until a market data provider responds.'));
+    return;
+  }
+  const coins=data.assets.filter(c=>finite(c.market_cap_usd)&&finite(c.change_24h_pct))
+    .sort((a,b)=>b.market_cap_usd-a.market_cap_usd).slice(0,50);
+  const heading=sectionHeading('Market Cap Heatmap','Top 50 coins with reported market cap and 24h changes. This is not a sector/category heatmap.');
+  const summary=panel('heatmap-intro',
+    el('h3','Visualize real cryptocurrency performance'),
+    el('p','Tile prominence reflects approximate market-cap rank; green indicates a gain and red a decline over 24h. Market movements and relative sizes are derived from CoinGecko observations, not manufactured simulations.','research-note'));
+  const graph=wrap('coin-heatmap');
+  coins.forEach((coin,index)=>{
+    const changeValue=coin.change_24h_pct;
+    const magnitude=Math.max(.09,Math.min(.7,Math.abs(changeValue)*.05+.12));
+    const positive=changeValue>=0;
+    const tile=button('',()=>openAsset(coin.provider_id),'heat-tile');
+    tile.classList.add(positive?'heat-up':'heat-down');
+    if(index<2)tile.classList.add('heat-large');
+    else if(index<8)tile.classList.add('heat-medium');
+    tile.style.background=positive?'rgba(26,145,99,'+magnitude+')':'rgba(204,70,70,'+magnitude+')';
+    const name=el('strong',(coin.symbol||coin.name||'—').toUpperCase(),'heat-symbol');
+    const changeText=el('span',pct(changeValue),'heat-change');
+    const cap=el('small',usdCompact(coin.market_cap_usd),'heat-cap');
+    tile.append(name,changeText,cap);
+    tile.setAttribute('aria-label',(coin.name||coin.provider_id)+', market cap '+usdCompact(coin.market_cap_usd)+', 24-hour change '+pct(changeValue));
+    graph.append(tile);
+  });
+  if(!coins.length)graph.append(el('p','No source market-cap and movement measurements available.','empty-panel'));
+  const legend=wrap('heat-legend',el('span','Declining 24h','down'),el('span','Growing 24h','up'));
+  display(heading,summary,panel('heatmap-panel',graph,legend,source(data)),
+    el('p','Data coverage is limited to the selected provider top-100 snapshot, with only coins that have a reported market cap and percentage change. Tile area is illustrative of relative rank, not an exact treemap.','research-note'));
+}
+async function loadHeatmap(){
+  if(state.market){
+    status(state.market.stale?'STALE market snapshot':'Provider-backed heatmap',state.market);
+    renderHeatmap();return;
+  }
+  display(el('p','Loading source-backed market performance heatmap…','loading-panel'));
+  try{
+    const data=await fetchJson('/api/markets?limit=100');
+    if(!Array.isArray(data.assets))throw Error('Invalid market data');
+    state.market=data;
+    status(data.stale?'STALE market snapshot':'Provider-backed heatmap',data);
+    renderHeatmap();
+  }catch(error){display(errorMessage('Heatmap unavailable: '+error.message));}
+}
 function metric(label,value){const d=el('div',null,'detail-stat');d.append(el('dt',label),el('dd',value));return d;}
 async function openAsset(id){
   if(!/^[a-z0-9][a-z0-9-]{0,99}$/.test(id))return;
@@ -317,8 +367,10 @@ async function openAsset(id){
     setText('page-title',(profile.name||id)+' ('+(profile.symbol||'').toUpperCase()+')');
     setText('page-description','Markets, historical prices, supply, contracts and independent reference links.');
     status('CoinGecko asset profile',profile);
-    const heading=wrap('breadcrumbs',button('← Back to '+(state.tab==='watch'?'Coin Watch':'Markets'),()=>{
-      overview.hidden=false;setText('page-title',titles[state.tab][0]);setText('page-description',titles[state.tab][1]);renderMarketHome();
+    const heading=wrap('breadcrumbs',button('← Back to '+(state.tab==='watch'?'Coin Watch':state.tab==='heatmap'?'Heatmap':'Markets'),()=>{
+      overview.hidden=state.tab==='heatmap';
+      setText('page-title',titles[state.tab][0]);setText('page-description',titles[state.tab][1]);
+      if(state.tab==='heatmap')renderHeatmap();else renderMarketHome();
     }));
     const name=wrap('asset-main',icon(profile),wrap('',el('h2',(profile.name||id)),el('span',(profile.symbol||'').toUpperCase()+' · Rank '+(profile.rank||'—'),'asset-symbol')));
     const price=wrap('asset-price',el('strong',money(profile.price_usd)),change(profile.change_24h_pct));
