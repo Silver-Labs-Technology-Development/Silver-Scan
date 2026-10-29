@@ -94,7 +94,7 @@ function setTheme(theme){
   try{localStorage.setItem(THEME_KEY,val);}catch{}
 }
 function setupTheme(){
-  let stored='light';try{stored=localStorage.getItem(THEME_KEY)||'light';}catch{}
+  let stored='dark';try{stored=localStorage.getItem(THEME_KEY)||'dark';}catch{}
   setTheme(stored);
   $('theme-toggle').addEventListener('click',()=>setTheme(document.documentElement.dataset.theme==='dark'?'light':'dark'));
 }
