@@ -95,6 +95,10 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/api/market/global":
             self._send(200, M.global_market())
             return
+        if path == "/api/market/sentiment":
+            days = self._query_int(query, "days", 30, 7, 90)
+            self._send(200, M.market_sentiment(days))
+            return
         if path == "/api/assets/profile":
             self._send(200, M.asset_profile((query.get("id") or [""])[0]))
             return
