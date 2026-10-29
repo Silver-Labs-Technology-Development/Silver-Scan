@@ -102,3 +102,94 @@ def test_upstream_payload_must_have_expected_shape():
     with patch.object(m, "_read_json", return_value=[]):
         with pytest.raises(m.ProviderUnavailable):
             m.dex_search("token")
+
+
+def test_sparkline_uses_real_provider_values_and_bounds_size():
+    raw = [coin()]
+    raw[0]["image"] = "https://coin-images.coingecko.com/coins/images/1/small/bitcoin.png"
+    raw[0]["sparkline_in_7d"] = {"price": list(range(180))}
+    raw[0]["price_change_percentage_1h_in_currency"] = 1.5
+    raw[0]["price_change_percentage_7d_in_currency"] = -3.5
+    with patch.object(m, "_read_json", return_value=raw):
+        result = m.markets(100)["assets"][0]
+    assert result["change_1h_pct"] == 1.5
+    assert result["change_7d_pct"] == -3.5
+    assert 2 <= len(result["sparkline_7d"]) <= 34
+    assert result["icon"].startswith("https://coin-images.coingecko.com/")
+
+
+def test_unsafe_coin_icons_not_returned():
+    assert m._coin_image("javascript:alert(1)") is None
+    assert m._coin_image("https://attacker.example/icon.png") is None
+    assert m._coin_image("https://coin-images.coingecko.com.evil.example/icon.png") is None
+
+
+def test_global_market_observations_and_attribution():
+    upstream = {"data": {
+        "total_market_cap": {"usd": 123_456_789},
+        "total_volume": {"usd": 19_000_000},
+        "market_cap_percentage": {"btc": 52.7, "eth": 10.2},
+        "active_cryptocurrencies": 12345,
+        "market_cap_change_percentage_24h_usd": -1.2,
+    }}
+    with patch.object(m, "_read_json", return_value=upstream):
+        result = m.global_market()
+    assert result["source"] == "CoinGecko"
+    assert result["market_cap_usd"] == 123_456_789
+    assert result["btc_dominance_pct"] == 52.7
+    assert result["active_cryptocurrencies"] == 12345
+
+
+def test_fear_greed_source_score_history_and_unavailable():
+    # Latest observations arrive in reverse order; adapter sorts them by time.
+    sample = {"data": [
+        {"value": "55", "value_classification": "Neutral", "timestamp": "1700000100"},
+        {"value": "28", "value_classification": "Fear", "timestamp": "1700000000"},
+    ]}
+    with patch.object(m, "_read_json", return_value=sample):
+        result = m.market_sentiment(30)
+    assert result["score"] == 55
+    assert result["classification"] == "Neutral"
+    assert result["source"] == "Alternative.me Crypto Fear & Greed Index"
+    assert result["history"][0]["value"] == 28
+    with pytest.raises(ValueError):
+        m.market_sentiment(500)
+    m._CACHE.clear()
+    with patch.object(m, "_read_json", return_value={"data": [{"value": "150", "timestamp": "1700000100"}]}):
+        with pytest.raises(m.ProviderUnavailable):
+            m.market_sentiment(30)
+
+
+def test_coin_profile_uses_provider_ids_contract_platforms_and_safe_links():
+    raw = {
+        "id": "bitcoin", "name": "Bitcoin", "symbol": "btc", "market_cap_rank": 1,
+        "description": {"en": "<p>Proof of work <b>network</b></p>"},
+        "market_data": {
+            "current_price": {"usd": 100_000}, "market_cap": {"usd": 200_000_000},
+            "total_volume": {"usd": 1_000_000}, "price_change_percentage_24h": 1.5
+        },
+        "platforms": {"ethereum": "0x123456", "solana": ""},
+        "image": {"large": "https://coin-images.coingecko.com/coins/images/1/large/bitcoin.png"},
+        "links": {"homepage": ["https://example.org"], "blockchain_site": ["https://blockchain.example"]},
+    }
+    with patch.object(m, "_read_json", return_value=raw):
+        result = m.asset_profile("bitcoin")
+    assert result["id"] == "coingecko:bitcoin"
+    assert result["price_usd"] == 100_000
+    assert result["description"] == "Proof of work network"
+    assert result["contracts"] == [{"network": "ethereum", "contract": "0x123456"}]
+    assert result["resources"][0]["label"] == "Official website"
+    with pytest.raises(ValueError):
+        m.asset_profile("../private")
+
+
+def test_coin_chart_uses_real_timestamp_value_pairs_only():
+    raw = {"prices": [[1700000000000, 10.0], [1700001000000, 11.0], [1700002000000, 10.5]]}
+    with patch.object(m, "_read_json", return_value=raw):
+        result = m.asset_chart("bitcoin", 7)
+    assert result["days"] == 7
+    assert result["source"] == "CoinGecko"
+    assert len(result["points"]) == 3
+    assert result["points"][0] == [1700000000000, 10]
+    with pytest.raises(ValueError):
+        m.asset_chart("bitcoin", 31)
