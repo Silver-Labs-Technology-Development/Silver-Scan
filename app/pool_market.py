@@ -1,7 +1,7 @@
 """SilverScan mining-pool comparison: permissioned snapshots only.
 
-No scraping of MiningPoolStats web pages or unofficial endpoints. Integrate a
-licensed/reviewed JSON export with SILVERSCAN_POOL_DATA_PATH and an explicit
+No scraping of MiningPoolStats web pages or unofficial endpoints. The
+operator asserts a separately authorized JSON dataset with SILVERSCAN_POOL_DATA_PATH and an explicit
 SILVERSCAN_POOL_DATA_AUTHORIZED=1. Otherwise expose an honest empty directory.
 This does not depend on or imply Silver Pool supports listed chains.
 """
@@ -69,7 +69,7 @@ def _snapshot():
     if not isinstance(data,dict) or data.get("schema_version")!=1:
         return None,"Invalid approved pool dataset schema"
     if data.get("provider")!="MiningPoolStats" or not isinstance(data.get("permission_reference"),str) or len(data["permission_reference"].strip())<8:
-        return None,"Dataset must declare provider and permission reference"
+        return None,"Dataset must declare provider and documented permission reference"
     if not isinstance(data.get("pools"),list) or not isinstance(data.get("networks"),list):
         return None,"Dataset requires networks and pools"
     if len(data["pools"])>_MAX_POOLS or len(data["networks"]) > _MAX_NETWORKS:
@@ -106,9 +106,9 @@ def directory(coin="all",sort="score",limit=100,offset=0):
     if type(offset) is not int or not 0<=offset<=20000:raise ValueError("offset must be 0–20000")
     dataset,warning=_snapshot()
     now=int(datetime.now(timezone.utc).timestamp())
-    result={"source":"MiningPoolStats (approved data import, if configured)",
+    result={"source":"Operator-supplied MiningPoolStats-labeled data (permission not independently verified)",
             "provider_data_loaded":bool(dataset),
-            "provider_permission_reviewed":bool(dataset),
+            "provider_permission_asserted":bool(dataset),
             "networks":[],"pools":[],"total_matching":0,
             "offset":offset,"limit":limit,"sort":sort,"coin":coin,
             "fetched_at":None,"warning":warning,
