@@ -32,9 +32,12 @@ FEEDS={
     "CoinDesk": ("https://www.coindesk.com/arc/outboundfeeds/rss/", "coindesk.com"),
     "Cointelegraph": ("https://cointelegraph.com/rss", "cointelegraph.com"),
     "Decrypt": ("https://decrypt.co/feed", "decrypt.co"),
+    "The Block": ("https://www.theblock.co/rss.xml", "theblock.co"),
+    "Bitcoin Magazine": ("https://bitcoinmagazine.com/feed", "bitcoinmagazine.com"),
 }
 _ALLOWED={"api.coingecko.com","pro-api.coinmarketcap.com","api.coinbase.com",
-          "www.coindesk.com","cointelegraph.com","decrypt.co"}
+          "www.coindesk.com","cointelegraph.com","decrypt.co",
+          "www.theblock.co","bitcoinmagazine.com"}
 _LOCK=threading.RLock()
 _CACHE={}
 _SIZES={"json":4_000_000,"xml":600_000}
@@ -288,7 +291,7 @@ def news(limit=20):
         # A publisher timestamp is separate from retrieval time.
         return {"articles":sorted(unique.values(),key=lambda x:x["published_at"] or 0,reverse=True),
                 "sources":sources}
-    data,ts,stale=_memo("news:rss:3",load,900,3600)
+    data,ts,stale=_memo("news:rss:5",load,900,3600)
     return {"source":"Publisher RSS feeds","sources":data["sources"],"articles":data["articles"][:limit],
             "fetched_at":ts,"stale":stale,
             "note":"Headlines and links only. Publishers own their stories; no reproduced articles or endorsements."}
