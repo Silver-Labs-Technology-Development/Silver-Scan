@@ -118,7 +118,7 @@ def test_reject_invalid_catalog_search_and_poisoned_numeric_input():
     with pytest.raises(ValueError):
         C.cg_catalog_search("\x00invalid")
     with pytest.raises(ValueError):
-        C.cg_market_page(101,250)
+        C.cg_market_page(501,250)
     with pytest.raises(ValueError):
         C.coinbase_pairs(-1,100)
     assert C._numeric("Infinity") is None
