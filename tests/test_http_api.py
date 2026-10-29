@@ -13,7 +13,7 @@ from http.server import ThreadingHTTPServer
 
 import pytest
 
-from app import main, indexer, adapters, market_data
+from app import main, indexer, adapters, market_data, coverage
 
 
 @pytest.fixture
@@ -56,6 +56,25 @@ def api_server(tmp_path, monkeypatch):
         "source": "CoinGecko", "provider_id": coin_id, "days": days,
         "points": [[1700000000000, 1.0], [1700000001000, 1.1]],
     })
+    monkeypatch.setattr(coverage, "cg_catalog_search", lambda q, limit: {
+        "source": "CoinGecko /coins/list", "catalog_count": 20001,
+        "matches": [{"id": "coingecko:bitcoin-silver-2", "name": "Bitcoin Silver"}],
+    })
+    monkeypatch.setattr(coverage, "cg_market_page", lambda page, limit: {
+        "source": "CoinGecko", "page": page, "limit": limit, "assets": [],
+    })
+    monkeypatch.setattr(coverage, "cg_quote", lambda coin: {
+        "source": "CoinGecko", "asset": {"id": "coingecko:" + coin},
+    })
+    monkeypatch.setattr(coverage, "cmc_active", lambda page, limit: {
+        "source": "CoinMarketCap", "page": page, "assets": [],
+    })
+    monkeypatch.setattr(coverage, "coinbase_pairs", lambda offset, limit: {
+        "source": "Coinbase Advanced Trade", "offset": offset, "pairs": [],
+    })
+    monkeypatch.setattr(coverage, "news", lambda limit: {
+        "source": "Publisher RSS feeds", "articles": [],
+    })
     monkeypatch.setattr(market_data, "dex_search", lambda query: {
         "source": "DEX Screener", "pairs": [], "stale": False, "fetched_at": 1234,
     })
@@ -95,6 +114,9 @@ def test_static_assets_are_served_and_safe(api_server):
         ("/features.html", "text/html"),
         ("/features.css", "text/css"),
         ("/features.js", "application/javascript"),
+        ("/data-hub.html", "text/html"),
+        ("/data-hub.css", "text/css"),
+        ("/data-hub.js", "application/javascript"),
     ]:
         status, headers, body = request(api_server, path)
         assert status == 200
@@ -184,3 +206,29 @@ def test_charts_sentiment_and_asset_profiles_use_source_backed_routes(api_server
     ]:
         status, _, result = data(api_server, path)
         assert status == 400 and "error" in result
+
+
+
+def test_source_coverage_low_rank_btcs_news_and_mining_routes(api_server):
+    status, _, search = data(api_server, "/api/catalog/search?q=BTCS&limit=20")
+    assert status == 200 and search["matches"][0]["id"] == "coingecko:bitcoin-silver-2"
+    status, _, quote = data(api_server, "/api/asset/quote?id=bitcoin-silver-2")
+    assert status == 200 and quote["asset"]["id"] == "coingecko:bitcoin-silver-2"
+    status, _, market = data(api_server, "/api/catalog/page?page=2&limit=100")
+    assert status == 200 and market["page"] == 2
+    status, _, cmc = data(api_server, "/api/coinmarketcap/active?page=2&limit=100")
+    assert status == 200 and cmc["source"] == "CoinMarketCap"
+    status, _, pairs = data(api_server, "/api/coinbase/pairs?offset=100&limit=100")
+    assert status == 200 and pairs["source"] == "Coinbase Advanced Trade"
+    status, _, news = data(api_server, "/api/news?limit=15")
+    assert status == 200 and news["source"] == "Publisher RSS feeds"
+    values = {
+        "miner_hashrate_hps": 1e9, "network_hashrate_hps": 1e12,
+        "block_reward": 5, "blocks_per_day": 144, "price_usd": 2,
+        "fee_percent": 2, "power_watts": 500, "electricity_usd_per_kwh": .10,
+    }
+    from urllib.parse import urlencode
+    status, _, calc = data(api_server, "/api/mining/estimate?" + urlencode(values))
+    assert status == 200 and calc["electricity_usd_per_day"] == 1.2
+    status, _, invalid = data(api_server, "/api/mining/estimate?miner_hashrate_hps=x")
+    assert status == 400 and "error" in invalid
