@@ -1,8 +1,8 @@
-# Silver Scan — Silver Labs Explorer & Research Terminal
+# SilverScan — Silver Labs Explorer & Research Terminal
 
 **Development prototype — not a hosted, complete or audited market service.**
 
-Silver Scan is an independent Silver Labs product, separate from any explorer
+SilverScan is an independent Silver Labs product, separate from any explorer
 owned by the Bitcoin Silver organization. It combines a BTCS L1 block explorer
 prototype with a developing multi-coin market research terminal.
 
@@ -27,14 +27,14 @@ source's chain and pair address, while market items retain stable CoinGecko IDs.
 
 ## Visible full-product feature map
 
-Navigate to `/features.html` from the Silver Scan main dashboard. This page
+Navigate to `/features.html` from the SilverScan main dashboard. This page
 visibly maps **36 capabilities across five pillars**: Markets & Research,
 Mining & Proof of Work, Blockchains & On-Chain Data, DEX & DeFi, and Projects &
 Ecosystem. It is searchable and filterable by `UI/backend prototype`,
 `partial integration`, and `on roadmap`.
 
 The directory is a real page, not a slide or a fake statistics screenshot. Its
-links open working portions of the existing Silver Scan preview. Unsupported
+links open working portions of the existing SilverScan preview. Unsupported
 modules (exchange comparisons, multi-chain token holders, NFTs, smart-contract
 verification, lending analytics, project advertising inventory and production
 wallet integrations) have clearly marked unavailable/roadmap states.
@@ -49,25 +49,45 @@ discovery and blockchain/token explorer navigation while remaining an original
 Silver Labs interface. This branch does not copy other sites' proprietary
 visuals or claim to have their full data coverage.
 
-## Multi-source Coin Universe, news and mining tools
+## SilverScan information architecture (October 2026)
 
-The new [Coin Universe and News workspace](app/static/data-hub.html) is served
-at `/data-hub.html`. It supplements the top-market dashboard with the
-CoinGecko full-ID catalog search (including low-ranked
-`bitcoin-silver-2`), paginated CoinGecko and CoinMarketCap active-market
-listings, public Coinbase spot-pair lookups, publisher-attributed crypto-news
-headlines and a user-input mining estimate calculator.
+This build uses **SilverScan** as one word. Product navigation has distinct
+destinations rather than duplicating Coin Universe as a standalone application:
 
-The server-side integration contracts live in [`app/coverage.py`](app/coverage.py).
-[Provider documentation and commercial rights](docs/DATA-SOURCES.md) explain
-which data is available, what needs credentials, which data requires
-commercial licensing, and why broad catalog IDs are **not** a claim that
-Silver Scan currently indexes 22,000+ actively traded/verified assets.
+- `/` — market-cap rankings across CoinGecko source pages; choose **25, 50,
+  100 or 200 coins per page** and use Previous/Next. Source pages may filter
+  zero-volume or unpriced records, so page counts are not an independently
+  verified number of actively traded assets. The separate heatmap is a
+  limited top-market visual.
+- `/coin-watch.html` — **Coin Watch + Coin Universe**: browser-local
+  watchlist (unique CoinGecko IDs), broad catalog search including
+  `bitcoin-silver-2`, CoinGecko/CMC market-page research and Coinbase spot
+  pairs. A saved ID does not assert trading volume or wallet support.
+- `/news.html` — independent publisher-attributed headline feed.
+- `/mining.html` — Silver Pool coin **readiness snapshot** and BTCS Core
+  network telemetry when connected, with a user-input expected-value mining
+  calculator. BTCS has a locally exercised backend; BTC/BCH/LTC/DOGE are
+  disabled candidates from public Silver Pool staging configuration.
+- `/features.html` — searchable platform capability roadmap.
+- `/data-hub.html` — compatibility redirect for old bookmarks to the new
+  Coin Watch / Crypto News / Mining destinations.
 
-The main UI, heatmap, explorer, feature map and new data hub use a navy,
-silver and light-blue theme. The static frontend alone does not provide
-API values; the Python backend needs live provider access and the BTCS
-node is required for BTCS L1 explorer/network mining data.
+Read [the provider and licensing boundaries](docs/DATA-SOURCES.md) before
+commercial use. Market providers, exchange pairs, mining-pool trackers and
+news publishers have different rights, freshness and validity rules.
+
+### Shared color contrast and preview status
+
+`app/static/theme.css` and `theme.js` provide a persistent accessible
+light/dark toggle to all standalone pages; the main market page shares the
+same stored preference through `research.js`. Dark mode uses opaque
+medium-navy cards with ice-blue links; light mode uses off-white/white cards
+with deep blue text. Automated contrast tests check key foreground/background
+pairs against the WCAG 4.5:1 text threshold. This **does not replace a
+human browser/screenshot review** on desktop and mobile.
+
+No public SilverScan API/data-hosting deployment, live multi-coin mining, real
+pool ROI feed or commercial data entitlement is claimed by this PR.
 
 ## Run locally
 
@@ -77,8 +97,8 @@ in the **local environment**; never add credentials to tracked files.
 
 ```sh
 export BTCS_NETWORK=main
-export BTCS_RPC_URL=http://127.0.0.1:10566
-# Provide BTCS_RPC_USER and BTCS_RPC_PASSWORD privately from your node config
+export BTCS_RPC_URL=http://127.0.0.1:10567
+# Example matches Silver Pool's mainnet RPC default (10567); verify your installed node's config.\n# Provide BTCS_RPC_USER and BTCS_RPC_PASSWORD privately from your node config
 export SILVERSCAN_DB="$PWD/silverscan.db"
 python3 -m app.indexer --max-blocks 100
 # Re-run until caught up, or explicitly start the continuous operator CLI:
@@ -141,7 +161,7 @@ provider coverage or live production readiness.
 
 ## Price charts, graphics, and Fear & Greed
 
-The market-first Silver Scan UI includes a responsive top-100 research table,
+The market-first SilverScan UI includes a responsive top-100 research table,
 true 7-day coin sparklines, real coin profile pages with five selectable price
 history ranges, global market totals, gainers/losers, a dominance ring for
 Bitcoin/Ethereum/other shares, and a Fear & Greed gauge with a historical line
