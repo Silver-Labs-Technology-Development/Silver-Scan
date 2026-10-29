@@ -11,15 +11,17 @@ import ipaddress
 import json
 import math
 import os
+import re
 from pathlib import Path
 from urllib.parse import urlsplit
 
-_MAX_SIZE=1_500_000
-_MAX_POOLS=2000
-_MAX_NETWORKS=300
+_MAX_SIZE=12_000_000
+_MAX_POOLS=20000
+_MAX_NETWORKS=2500
 _MAX_AGE=24*3600*7
 _VALID_SCHEMES={"PPLNS","PPS","FPPS","PROP","SOLO","UNKNOWN"}
-_ALLOWED_NETWORKS={"btcs":"bitcoin-silver-2","btc":"bitcoin","bch":"bitcoin-cash","ltc":"litecoin","doge":"dogecoin"}
+_DEFAULT_CG_IDS={"btcs":"bitcoin-silver-2","btc":"bitcoin","bch":"bitcoin-cash","ltc":"litecoin","doge":"dogecoin"}
+_ID=re.compile(r"^[a-z0-9][a-z0-9-]{0,79}$")
 
 def _number(raw, *, low=0, high=1e30):
     try:
@@ -43,7 +45,7 @@ def _https(value):
     return value
 
 def _slug(raw):
-    return raw if isinstance(raw,str) and raw in _ALLOWED_NETWORKS else None
+    return raw if isinstance(raw,str) and _ID.fullmatch(raw) else None
 
 def _timestamp(raw):
     return raw if type(raw) is int and 0<raw<4_100_000_000 else None
@@ -101,7 +103,7 @@ def directory(coin="all",sort="score",limit=100,offset=0):
     if coin!="all" and not _slug(coin):raise ValueError("Unknown coin")
     if sort not in ("score","fee","hashrate","name"):raise ValueError("Unknown ranking factor")
     if type(limit) is not int or not 1<=limit<=200:raise ValueError("limit must be 1–200")
-    if type(offset) is not int or not 0<=offset<=2000:raise ValueError("offset must be 0–2000")
+    if type(offset) is not int or not 0<=offset<=20000:raise ValueError("offset must be 0–20000")
     dataset,warning=_snapshot()
     now=int(datetime.now(timezone.utc).timestamp())
     result={"source":"MiningPoolStats (approved data import, if configured)",
@@ -123,7 +125,7 @@ def directory(coin="all",sort="score",limit=100,offset=0):
         slug=_slug(item.get("coin"))
         if slug is None or slug in network_map:continue
         row={
-            "coin":slug,"coingecko_id":_ALLOWED_NETWORKS[slug],
+            "coin":slug,"coingecko_id":(_slug(item.get("coingecko_id")) or _DEFAULT_CG_IDS.get(slug)),
             "algorithm":str(item.get("algorithm") or "")[:65],
             "network_hashrate_hps":_number(item.get("network_hashrate_hps")),
             "difficulty":_number(item.get("difficulty")),
