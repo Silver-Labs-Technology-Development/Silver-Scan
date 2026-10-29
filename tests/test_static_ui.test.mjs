@@ -93,7 +93,8 @@ test('Coin Watch combines catalog discovery with saved coins, separate news and 
 test('main market pages offer provider pagination with 25–200 coins per page',()=>{
   assert.match(research,/marketPageSize:50/);
   assert.match(research,/\[25,50,100,200\]/);
-  assert.match(research,/\/api\/catalog\/page\?page=/);
+  assert.match(research,/\/api\/catalog\/page/);
+  assert.match(research,/marketProviders\[state\.marketProvider\]/);
   assert.match(research,/marketHasMore/);
   assert.match(research,/Previous/);
   assert.match(research,/Next/);
@@ -125,7 +126,8 @@ test('manual account portfolio has real forms and user-owned positions without w
   assert.match(watch,/id="holding-quantity"/);
   assert.match(watch,/src="\.\/portfolio\.js"/);
   assert.match(watch,/No wallet connection, signatures, deposits or ownership checks/);
-  assert.match(client,/\/api\/account\/register/);
+  assert.match(client,/\/api\/account\/'\+route/);
+  assert.match(client,/sign\(event,'register'\)/);
   assert.match(client,/\/api\/account\/portfolio/);
   assert.match(client,/\/api\/coin-watch\/quotes/);
   assert.match(client,/credentials:'same-origin'/);
