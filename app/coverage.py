@@ -146,7 +146,7 @@ def cg_market_page(page=1,limit=100):
     if type(limit) is not int or not 1<=limit<=250:
         raise ValueError("limit must be 1–250")
     params=urlencode({"vs_currency":"usd","order":"market_cap_desc",
-                      "per_page":limit,"page":page,"sparkline":"false",
+                      "per_page":limit,"page":page,"sparkline":"true" if limit<=100 else "false",
                       "price_change_percentage":"1h,24h,7d"})
     def load():
         data=_fetch(CG+"/coins/markets?"+params,
@@ -163,12 +163,17 @@ def cg_market_page(page=1,limit=100):
                        "name":item.get("name"),"symbol":item.get("symbol"),"rank":item.get("market_cap_rank"),
                        "price_usd":price,"volume_24h_usd":volume,
                        "market_cap_usd":_numeric(item.get("market_cap")),
-                       "change_24h_pct":_numeric(item.get("price_change_percentage_24h")),
+                       "change_1h_pct":_numeric(item.get("price_change_percentage_1h_in_currency")),
+                       "change_24h_pct":_numeric(item.get("price_change_percentage_24h_in_currency") if item.get("price_change_percentage_24h_in_currency") is not None else item.get("price_change_percentage_24h")),
+                       "change_7d_pct":_numeric(item.get("price_change_percentage_7d_in_currency")),
+                       "circulating_supply":_numeric(item.get("circulating_supply")),
+                       "icon":M._coin_image(item.get("image")),
+                       "sparkline_7d":M._sparkline(item.get("sparkline_in_7d")),
                        "source":"CoinGecko","market_status":"provider-reported-volume"})
     return {"source":"CoinGecko","page":page,"limit":limit,"assets":values,
             "provider_rows":len(raw),"has_more":len(raw)==limit,
             "fetched_at":ts,"stale":stale,
-            "note":"Only rows reporting positive 24h volume and price. Price/volume can be stale or inaccurate."}
+            "note":"Market-cap ranked provider page (not the complete coin catalog). Only rows with positive observed price and 24h volume are shown; rankings may have gaps. Page 200 omits mini-sparklines to limit upstream API payload."}
 
 
 def cg_quote(coin_id):
