@@ -6,7 +6,6 @@ const box=(cls,...parts)=>{const n=el('div',null,cls);n.append(...parts);return 
 const compact=n=>typeof n==='number'&&Number.isFinite(n)?new Intl.NumberFormat('en-US',{notation:'compact',maximumFractionDigits:3}).format(n):'—';
 const usd=n=>typeof n==='number'&&Number.isFinite(n)?'$'+(n<.01&&n>0?n.toPrecision(3):compact(n)):'—';
 const pct=n=>typeof n==='number'&&Number.isFinite(n)?(n>0?'+':'')+n.toFixed(2)+'%':'—';
-const status=(target,msg)=>$(target).replaceChildren(el('p',msg,'hub-note'));
 const link=(href,label)=>{const a=el('a',label);a.href=href;a.target='_blank';a.rel='noopener noreferrer';return a};
 async function get(url){
   const r=await fetch(url,{headers:{Accept:'application/json'}});
@@ -25,11 +24,24 @@ function addCell(row,text){
   if(text instanceof Node)c.append(text);else c.textContent=String(text??'—');
   row.append(c);
 }
+const WATCH_KEY='silver-scan-coin-watch-v1';
+const watched=()=>{
+  try{const ids=JSON.parse(localStorage.getItem(WATCH_KEY)||'[]');
+    return Array.isArray(ids)?ids.filter(id=>typeof id==='string'&&/^coingecko:[a-z0-9-]{1,100}$/.test(id)).slice(0,50):[];}
+  catch{return [];}
+};
+function toggleWatch(id){
+  if(!/^coingecko:[a-z0-9-]{1,100}$/.test(id))return;
+  const ids=watched(),next=ids.includes(id)?ids.filter(x=>x!==id):[...ids,id].slice(0,50);
+  try{localStorage.setItem(WATCH_KEY,JSON.stringify(next));}catch{return;}
+  renderWatch();
+}
+
 function assetTable(rows,kind){
   const wrapper=el('div',null,'hub-table-scroll');
   const table=el('table',null,'hub-table');
   const head=el('tr');
-  const names=kind==='pairs'?['Pair','Base/Quote','Spot price','24h volume','Status']:['Asset','Market ID','Rank','USD price','24h volume','24h change'];
+  const names=kind==='pairs'?['Pair','Base/Quote','Spot price','24h volume','Status']:['Asset','Market ID','Rank','USD price','24h volume','24h change','Watch'];
   for(const h of names)head.append(el('th',h));
   const th=el('thead');th.append(head);table.append(th);
   const body=el('tbody');
@@ -45,11 +57,48 @@ function assetTable(rows,kind){
       addCell(tr,box('hub-asset-cell',name,sub));
       addCell(tr,data.id||'—');addCell(tr,data.rank??'—');
       addCell(tr,usd(data.price_usd));addCell(tr,usd(data.volume_24h_usd));addCell(tr,pct(data.change_24h_pct));
+      const c=el('td');
+      if(typeof data.id==='string'&&data.id.startsWith('coingecko:')){
+        const active=watched().includes(data.id);
+        const star=el('button',active?'★':'☆','hub-watch-star');
+        star.type='button';star.title=active?'Remove from Coin Watch':'Add to Coin Watch';
+        star.setAttribute('aria-label',(active?'Remove ':'Watch ')+(data.name||data.id));
+        star.setAttribute('aria-pressed',String(active));
+        star.addEventListener('click',()=>{toggleWatch(data.id);star.textContent=watched().includes(data.id)?'★':'☆';star.setAttribute('aria-pressed',String(watched().includes(data.id)));});
+        c.append(star);
+      }else c.textContent='—';
+      tr.append(c);
     }
     body.append(tr);
   }
   table.append(body);wrapper.append(table);return wrapper;
 }
+async function renderWatch(){
+  const panel=$('watch-results');if(!panel)return;
+  const ids=watched();
+  if(!ids.length){
+    panel.replaceChildren(el('p','Your watchlist is empty. Search the catalog below and select ☆ to save a coin.','hub-note'));return;
+  }
+  panel.replaceChildren(el('p','Looking up '+ids.length+' watched provider identifiers…','hub-note'));
+  try{
+    const result=await get('/api/coin-watch/quotes?ids='+encodeURIComponent(ids.map(x=>x.slice('coingecko:'.length)).join(',')));
+    const assets=result.assets||[];
+    panel.replaceChildren(meta(result),assets.length?assetTable(assets,'assets'):el('p','No current market quotes for saved provider IDs. The coins remain saved locally.','hub-note'));
+    const missing=ids.filter(id=>!assets.some(a=>a.id===id));
+    if(missing.length){
+      const wrap=el('div',null,'hub-missing');
+      wrap.append(el('h3','Saved IDs without live quotes'));
+      for(const id of missing){
+        const row=box('hub-missing-row',el('code',id));
+        const b=el('button','Remove','hub-watch-star');b.type='button';b.addEventListener('click',()=>toggleWatch(id));
+        row.append(b);wrap.append(row);
+      }
+      panel.append(wrap);
+    }
+  }catch(e){panel.replaceChildren(el('p','Watchlist provider unavailable: '+e.message,'hub-error'),
+    el('p','Saved locally: '+ids.join(', '),'hub-note'));}
+}
+
 let currentPage=0,currentSource='cg';
 const pageInfo=$('universe-progress');
 async function loadUniverse({search=null,next=false}={}){
@@ -88,13 +137,13 @@ async function loadUniverse({search=null,next=false}={}){
     pageInfo.textContent='No active records verified';
   }
 }
-$('asset-search').addEventListener('submit',event=>{
+$('asset-search')?.addEventListener('submit',event=>{
   event.preventDefault();const q=$('search-coins').value.trim();if(q.length>=2)loadUniverse({search:q});
 });
-$('load-listings').addEventListener('click',()=>loadUniverse());
-$('next-page').addEventListener('click',()=>loadUniverse({next:true}));
-$('market-source').addEventListener('change',()=>{currentPage=0;$('universe-progress').textContent='Select “Load source listings”'});
-$('btcs-fetch').addEventListener('click',async()=>{
+$('load-listings')?.addEventListener('click',()=>loadUniverse());
+$('next-page')?.addEventListener('click',()=>loadUniverse({next:true}));
+$('market-source')?.addEventListener('change',()=>{currentPage=0;$('universe-progress').textContent='Select “Load source listings”'});
+$('btcs-fetch')?.addEventListener('click',async()=>{
   const panel=$('btcs-result');panel.replaceChildren(el('p','Checking BTCS via CoinGecko ID bitcoin-silver-2…','hub-note'));
   try{
     const result=await get('/api/asset/quote?id=bitcoin-silver-2');
@@ -123,8 +172,8 @@ async function loadNews(){
     panel.replaceChildren(...(nodes.length?nodes:[el('p','No verified publisher headlines returned.','hub-note')]),meta(data));
   }catch(e){panel.replaceChildren(el('p','News sources unavailable: '+e.message,'hub-error'));}
 }
-$('refresh-news').addEventListener('click',loadNews);
-$('mining-form').addEventListener('submit',async event=>{
+$('refresh-news')?.addEventListener('click',loadNews);
+$('mining-form')?.addEventListener('submit',async event=>{
   event.preventDefault();
   const form=event.currentTarget,params=new URLSearchParams();
   for(const field of form.elements){
@@ -141,15 +190,52 @@ $('mining-form').addEventListener('submit',async event=>{
     out.replaceChildren(cards,el('p',d.note,'hub-meta'));
   }catch(e){out.replaceChildren(el('p','Cannot calculate: '+e.message,'hub-error'));}
 });
-loadNews();
+$('reload-watch')?.addEventListener('click',renderWatch);
+if($('watch-results'))renderWatch();
+if($('news-results'))loadNews();
 const initialQuery=new URLSearchParams(location.search).get('search');
-if(initialQuery&&initialQuery.trim().length>=2&&initialQuery.length<=70){
+if($('search-coins')&&initialQuery&&initialQuery.trim().length>=2&&initialQuery.length<=70){
   $('search-coins').value=initialQuery.trim();
   loadUniverse({search:initialQuery.trim()});
 }
-if(location.hash==='#news'||location.hash==='#mining'||location.hash==='#pool-sources'){
-  // The HTML anchor links target actual subsections in the document.
-}else{
-  // First visit offers a useful BTCS quote without assuming success.
-  $('btcs-fetch').click();
+if($('btcs-fetch'))$('btcs-fetch').click();
+if($('mining-network-results'))loadMiningNetworks();
+$('refresh-mining')?.addEventListener('click',loadMiningNetworks);
+
+async function loadMiningNetworks(){
+  const output=$('mining-network-results');
+  if(!output)return;
+  output.replaceChildren(el('p','Reading Silver Pool published registry status…','hub-note'));
+  try{
+    const data=await get('/api/mining/coins');
+    const rows=data.coins||[];
+    const cards=el('div',null,'hub-source-cards');
+    for(const coin of rows){
+      const card=el('article',null,'mining-coin');
+      const heading=box('hub-panel-head',el('h3',coin.name+' ('+coin.id.toUpperCase()+')'));
+      card.append(heading,el('p','Algorithm: '+coin.algorithm));
+      card.append(el('p','Pool status: '+coin.status,'hub-mining-status'));
+      card.append(el('p','Public mining: '+(coin.public_mining_enabled?'Verified enabled':'Not verified / disabled')));
+      card.append(el('p','Network H/s: — · Pool H/s: — · Difficulty: — · Reward: —','hub-note'));
+      if(coin.miningpoolstats_url)card.append(link(coin.miningpoolstats_url,'MiningPoolStats external reference'));
+      const target=el('button','Estimate with my inputs','hub-estimate-link');
+      target.type='button';target.addEventListener('click',()=>{
+        document.getElementById('mining')?.scrollIntoView({block:'start',behavior:'smooth'});
+        const title=$('estimate-target');if(title)title.textContent='Estimating '+coin.name+' ('+coin.id.toUpperCase()+') — enter real assumptions';
+        $('miner-hash')?.focus();
+      });
+      card.append(target);cards.append(card);
+    }
+    output.replaceChildren(meta(data),cards);
+    try{
+      const node=await get('/api/mining/overview');
+      const label=box('hub-node-stats',
+        el('h3','Verified BTCS node observations'),
+        el('p','Height: '+(node.height??'—')+' · Difficulty: '+(node.difficulty??'—')+' · Network H/s: '+(node.network_hashrate_hps??'—')),
+        el('p','Source: '+node.source+' · node-only, not Silver Pool pool hashrate or earnings','hub-meta'));
+      output.prepend(label);
+    }catch{
+      output.prepend(el('p','BTCS Core node RPC is not connected to this preview. Network difficulty and hashrate are unavailable.','hub-note'));
+    }
+  }catch(e){output.replaceChildren(el('p','Coin registry currently unavailable: '+e.message,'hub-error'));}
 }
