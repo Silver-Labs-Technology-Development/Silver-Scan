@@ -69,7 +69,7 @@ async function loadUniverse({search=null,next=false}={}){
       const data=await get(url);
       const rows=data.matches||[];
       panel.replaceChildren(meta(data),rows.length?assetTable(rows,'assets'):el('p','No provider IDs matched your search.','hub-note'));
-      pageInfo.textContent=rows.length+' matching catalog identifiers · no trading status implied';
+      pageInfo.textContent=rows.length+' matching catalog IDs'+(typeof data.catalog_count==='number'?' from '+data.catalog_count.toLocaleString('en-US')+' provider catalog IDs':'')+' · active trading not verified';
       $('universe-source').textContent='CoinGecko /coins/list';
       return;
     }
