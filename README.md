@@ -25,6 +25,30 @@ cache condition. Data is never invented when providers or backends fail. The
 ticker alone must never be used to identify a token; DEX pairs include the
 source's chain and pair address, while market items retain stable CoinGecko IDs.
 
+## Visible full-product feature map
+
+Navigate to `/features.html` from the Silver Scan main dashboard. This page
+visibly maps **36 capabilities across five pillars**: Markets & Research,
+Mining & Proof of Work, Blockchains & On-Chain Data, DEX & DeFi, and Projects &
+Ecosystem. It is searchable and filterable by `UI/backend prototype`,
+`partial integration`, and `on roadmap`.
+
+The directory is a real page, not a slide or a fake statistics screenshot. Its
+links open working portions of the existing Silver Scan preview. Unsupported
+modules (exchange comparisons, multi-chain token holders, NFTs, smart-contract
+verification, lending analytics, project advertising inventory and production
+wallet integrations) have clearly marked unavailable/roadmap states.
+
+The main navigation also contains a **performance heatmap**, drawn from
+actual CoinGecko top-100 snapshot values; each tile links to a detailed coin
+profile. Tile size approximates rank, **not exact market-cap area**. It is
+not a category heatmap, and no unavailable data is simulated.
+
+The information architecture combines broad market research, mining-pool
+discovery and blockchain/token explorer navigation while remaining an original
+Silver Labs interface. This branch does not copy other sites' proprietary
+visuals or claim to have their full data coverage.
+
 ## Run locally
 
 The frontend and Python API are served together, on a loopback-only
@@ -86,6 +110,7 @@ node --test tests/test_static_ui.test.mjs
 node --check app/static/explorer.js
 node --check app/static/research.js
 node --check app/static/charts.js
+node --check app/static/features.js
 python3 -m compileall -q app tests
 ```
 
