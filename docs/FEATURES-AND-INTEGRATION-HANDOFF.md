@@ -3,7 +3,7 @@
 **Date:** 2026-10-29  
 **Production UX:** https://silver-scan.silver-labs-technology-development.workers.dev/  
 **Production features:** https://silver-scan.silver-labs-technology-development.workers.dev/features  
-**Scope of this branch:** Back-end-only direct market observations and a structured feature inventory.
+**Scope of this branch:** Back-end-only direct market observations and a structured feature inventory. The existing tested `app/venue_observations.py` implementation is canonical; do not create a second collector.
 
 ## Non-negotiable production/UI protection
 
@@ -53,9 +53,9 @@ It also contains **18 proposed additions** inspired by the useful research funct
 
 ## Shipped in this isolated development branch
 
-- `app/direct_venue_data.py`: read-only direct Coinbase Exchange and Kraken REST market pair discovery, sampled ticker collection, strict decimal validation and bounded requests. No API keys necessary for the documented public endpoints. **Exchange licensing and public redistribution rights still require review.**
-- `app/direct_venue_api.py`: same-origin integration adapter (not automatically mounted) returning local DB observations and source health.
-- `tests/test_direct_venue_data.py` and `tests/test_direct_venue_api.py`: offline mocked tests.
+- `app/venue_observations.py`: tested read-only Coinbase Exchange and Kraken REST collectors, exact decimal prices, bounded observations, local SQLite and source status.
+- `app/venue_api.py`: read-only, locally-mounted API adapter for source status, market pairs, and sampled price history.
+- `tests/test_venue_observations.py`: existing offline collection and route tests.
 - `docs/silverscan-feature-catalog.json` and catalog validation tests.
 
 **Not shipped:** a full exchange firehose, global volume/cap statistics, OHLC candles, web frontend changes, historical chain indexers, automatic background scheduler, production deployment, independent listing verification, or a market-wide asset identity map.
@@ -65,9 +65,10 @@ It also contains **18 proposed additions** inspired by the useful research funct
 Run in the actual development repository after safely integrating this branch:
 
 ```bash
-python3 -m pytest -q tests/test_direct_venue_data.py tests/test_direct_venue_api.py tests/test_feature_catalog.py
-python3 -m app.direct_venue_data --venue coinbase --limit 5 --db data/silverscan-venues.sqlite3
-python3 -m app.direct_venue_data --venue kraken --limit 5 --db data/silverscan-venues.sqlite3
+python3 -m pytest -q tests/test_feature_catalog.py
+python3 -m unittest discover -s tests -p 'test_venue_observations.py' -v
+python3 -m app.venue_observations --venue coinbase --market BTC-USD
+python3 -m app.venue_observations --venue kraken --market XXBTZUSD
 ```
 
 The two collector commands make outbound read-only requests **only when explicitly invoked**. They can fail because of network reachability, rate limits, provider API changes, or licensing constraints. Test with mock fixtures before enabling any recurring job.
@@ -75,22 +76,21 @@ The two collector commands make outbound read-only requests **only when explicit
 To integrate the API without overwriting the current local backend:
 
 ```python
-from app.direct_venue_api import handle_get
-from app.direct_venue_data import VenueStore
+from app.venue_api import handle_get
+from app.venue_observations import VenueStore
 
-# Construct once at server startup with an operator-controlled local DB.
-venue_store = VenueStore("data/silverscan-venues.sqlite3")
-
-# Inside the existing read-only GET routing function:
+# See docs/DIRECT-VENUE-ENGINE-HANDOFF.md for construction and lifecycle.
+# Inside existing read-only GET routing:
 result = handle_get(request_path_with_query, venue_store)
 if result is not None:
     http_status, json_payload = result
-    # Serialize using the existing secure response helper.
+    # Send JSON via the existing validated response helper.
 ```
 
 Endpoints after Cline mounts them:
-- `GET /api/direct-venues/latest?limit=50`
-- `GET /api/direct-venues/sources`
+- `GET /api/venues/sources`
+- `GET /api/venues/markets?venue=coinbase`
+- `GET /api/venues/history?venue=kraken&market=XXBTZUSD`
 
 Both read **stored** observations; neither accesses the exchange APIs when requested by a browser.
 
