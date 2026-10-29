@@ -7,6 +7,7 @@ review, TLS, durable storage, backup/recovery and abuse prevention.
 """
 from __future__ import annotations
 
+from contextlib import contextmanager
 from decimal import Decimal, InvalidOperation
 import hashlib
 import hmac
@@ -43,6 +44,7 @@ def _db_path() -> Path:
                 (Path.home() / ".local" / "share" / "silverscan" / "accounts.sqlite3"))
 
 
+@contextmanager
 def _db():
     path = _db_path()
     path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
@@ -53,7 +55,11 @@ def _db():
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA busy_timeout=10000")
     conn.execute("PRAGMA foreign_keys=ON")
-    return conn
+    try:
+        with conn:
+            yield conn
+    finally:
+        conn.close()
 
 
 def init_db():
