@@ -1,4 +1,4 @@
-<!doctype html><html><head><meta charset="utf-8"><title>Silver Scan</title>
+<!doctype html><html lang="en"><head><meta name="viewport" content="width=device-width, initial-scale=1"><meta charset="utf-8"><title>Silver Scan — Markets, Coin Watch, DEX Scan &amp; Explorer</title>
 <style>
 body{font-family:system-ui,sans-serif;background:#0f0f10;color:#e8e8e8;margin:0}
 header{background:#1a1a1c;padding:16px;border-bottom:1px solid #333;position:sticky;top:0}
@@ -12,12 +12,33 @@ pre{white-space:pre-wrap;word-break:break-all;font-size:12px}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
 .stat{background:#222;padding:12px;border-radius:8px}
 .stat .v{font-size:20px;font-weight:700}
+.research-nav{display:flex;gap:10px;padding:12px 20px;flex-wrap:wrap;border-bottom:1px solid #333}
+.research-nav button{background:#29292d;color:#eee}
+.research-nav button.selected{background:#e2e2e2;color:#111}
+.research-disclaimer{max-width:1100px;margin:14px auto 0;padding:0 20px;color:#a9a9aa;font-size:13px}
+.research-note{color:#b3b4bb;font-size:13px;line-height:1.6}
+.research-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.research-form{display:flex;gap:10px;flex-wrap:wrap;margin:20px 0}
+.research-form input{flex:1;min-width:200px}
+.research-action{font-size:12px}
+#research-view{overflow-x:auto}
+main[hidden]{display:none}
+:focus-visible{outline:3px solid #b9d9ff;outline-offset:3px}
+@media(max-width:680px){header>div{flex-wrap:wrap}header input{min-width:80%;flex:auto}table{min-width:660px}}
 </style></head><body>
-<header><div style="display:flex;gap:12px;align-items:center"><h1 style="margin:0;font-size:20px">Silver Scan</h1><span style="color:#888">Silver Labs explorer</span>
+<header><div style="display:flex;gap:12px;align-items:center"><h1 style="margin:0;font-size:20px">Silver Scan</h1><span style="color:#888">Silver Labs · multi-coin research terminal</span>
 <input id="q" placeholder="block height/hash, txid, address" style="flex:1">
 <button onclick="search()">Search</button>
 <select id="net"></select></div></header>
+<nav class="research-nav" aria-label="Silver Scan tools">
+  <button type="button" data-tab="explorer" aria-pressed="true">BTCS Explorer</button>
+  <button type="button" data-tab="markets" aria-pressed="false">Markets</button>
+  <button type="button" data-tab="watch" aria-pressed="false">Coin Watch</button>
+  <button type="button" data-tab="dex" aria-pressed="false">DEX Scan</button>
+</nav>
+<p class="research-disclaimer">Independent Silver Labs research. BTCS L1 explorer is a local prototype. Markets and DEX data come from external providers, not Silver Labs trading. No live wallet, swaps, or payout services are implied.</p>
 <main id="view"></main>
+<main id="research-view" hidden aria-live="polite"></main>
 <script>
 async function api(p){const r=await fetch(p);if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.error||r.statusText);}return r.json();}
 async function loadNetworks(){const nets=await api('/api/networks');const s=document.getElementById('net');s.innerHTML=nets.map(n=>`<option value="${n.id}">${n.name}</option>`).join('');}
@@ -71,4 +92,4 @@ async function search(){
   }catch(e){ alert(e.message); }
 }
 loadNetworks().then(()=>{document.getElementById('net').addEventListener('change',home);home();});
-</script></body></html>
+</script><script type="module" src="./research.js"></script></body></html>
