@@ -290,3 +290,24 @@ h3{font-size:15px;letter-spacing:-.25px;margin:0 0 8px}
 .research-note+.source-line{margin-top:10px}
 @media(max-width:950px){.visualization-grid{grid-template-columns:1fr}.data-visual-card{min-height:230px}.dominance-graphic{min-height:190px}}
 @media(max-width:550px){.dominance-graphic{gap:13px}.dominance-ring{width:128px;height:128px}.dominance-ring-center{width:89px;height:89px}.dominance-ring-center strong{font-size:19px}.dominance-legend{min-width:110px}.data-visual-card{padding:16px}.chart-range{gap:5px}.chart-range button{padding:5px 7px}.asset-head{padding:14px}.asset-main h2{font-size:18px}}
+
+/* Research feature atlas navigation and real, data-backed coin performance heatmap */
+.research-nav a.feature-link-nav{display:inline-flex;align-items:center;gap:5px;color:var(--brand);padding:15px 1px 13px;text-decoration:none;white-space:nowrap;border-bottom:3px solid transparent;font-size:13px;font-weight:750}
+.research-nav a.feature-link-nav:hover{text-decoration:underline}
+.coin-heatmap{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));grid-auto-rows:minmax(93px,auto);gap:7px}
+.heat-tile{grid-column:span 2;background:var(--panel-alt);border:1px solid #ffffff26;border-radius:8px;padding:11px;display:flex;flex-direction:column;gap:5px;text-align:left;color:var(--text);font-variant-numeric:tabular-nums;min-width:0;overflow:hidden}
+.heat-tile:hover{filter:brightness(1.08);outline:2px solid var(--brand);outline-offset:-2px}
+.heat-tile:focus-visible{outline:3px solid var(--brand)}
+.heat-tile.heat-large{grid-column:span 4;grid-row:span 2;justify-content:center;align-items:center}
+.heat-tile.heat-medium{grid-column:span 3}
+.heat-tile .heat-symbol{font-size:clamp(12px,1.5vw,18px);font-weight:850;letter-spacing:-.02em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.heat-tile.heat-large .heat-symbol{font-size:clamp(22px,2.5vw,35px)}
+.heat-tile .heat-change{font-size:14px;font-weight:780}
+.heat-tile.heat-large .heat-change{font-size:22px}
+.heat-tile .heat-cap{font-size:11px;opacity:.8}
+.heat-legend{display:flex;gap:18px;margin:15px 0;color:var(--muted);font-weight:740;font-size:12px}
+.heatmap-intro{margin:17px 0}
+.heatmap-intro h3{font-size:17px}
+.heatmap-panel{overflow:hidden}
+@media(max-width:920px){.coin-heatmap{grid-template-columns:repeat(6,minmax(0,1fr))}.heat-tile{grid-column:span 2}.heat-tile.heat-large{grid-column:span 3;grid-row:span 2}.heat-tile.heat-medium{grid-column:span 2}}
+@media(max-width:560px){.coin-heatmap{grid-template-columns:repeat(4,minmax(0,1fr));grid-auto-rows:minmax(84px,auto)}.heat-tile{grid-column:span 2}.heat-tile.heat-large,.heat-tile.heat-medium{grid-column:span 2;grid-row:span 1}.heat-tile.heat-large .heat-symbol{font-size:17px}.heat-tile.heat-large .heat-change{font-size:15px}.heat-tile{padding:9px}.heat-tile .heat-cap{font-size:10px}}
