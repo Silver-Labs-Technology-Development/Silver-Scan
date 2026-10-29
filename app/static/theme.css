@@ -154,3 +154,11 @@ html[data-theme=dark] .site-footer a,html[data-theme=dark] .site-footer strong{c
 #account-message:not(:empty){margin:10px 0 16px;padding:10px 13px}
 @media(max-width:790px){.account-auth-layout,.account-portfolio-grid{grid-template-columns:1fr}.portfolio-holding{grid-template-columns:1fr 1fr}.portfolio-coin-actions{grid-column:1/-1}}
 @media(max-width:500px){.portfolio-holding{grid-template-columns:1fr}.portfolio-coin-actions{grid-column:1/-1}}
+
+/* Shared integration-preview skeleton. Never display placeholder numerical data. */
+.feature-skeleton{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin:5px 0 22px;max-width:950px}
+.feature-skeleton-line{height:85px;background:repeating-linear-gradient(100deg,var(--panel-alt),var(--panel-alt) 18px,var(--panel) 19px,var(--panel) 50px);border:1px solid var(--line);border-radius:11px}
+.feature-skeleton-graphic{grid-column:1/-1;min-height:155px;border:1px dashed var(--line);border-radius:11px;background:linear-gradient(180deg,var(--panel-alt),var(--panel));position:relative;overflow:hidden}
+.feature-skeleton-graphic:after{content:"INTERFACE PREVIEW — DATA NOT CONNECTED";position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:15px;color:var(--muted);font-size:12px;font-weight:800;letter-spacing:.08em}
+.feature-skeleton-graphic:before{content:"";position:absolute;inset:25px 15px 25px;border-bottom:2px dashed var(--line);border-left:2px dashed var(--line)}
+@media(max-width:600px){.feature-skeleton{grid-template-columns:1fr}.feature-skeleton-graphic{grid-column:auto}}
