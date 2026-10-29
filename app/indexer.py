@@ -120,17 +120,23 @@ def _canonical_tip():
     if node_height < 0:
         raise ValueError("invalid node chain height")
     with closing(conn()) as db:
-        rows = db.execute("SELECT height,hash FROM chain_blocks ORDER BY height DESC").fetchall()
+        # Common path: one index lookup and one node hash comparison, no
+        # O(chain height) memory allocation on every catch-up batch.
+        row = db.execute("SELECT height,hash FROM chain_blocks ORDER BY height DESC LIMIT 1").fetchone()
+        height = row["height"] if row else -1
         divergent_height = None
-        for row in rows:
-            height = row["height"]
-            if height > node_height or _rpc("getblockhash", [height]) != row["hash"]:
+        while height >= 0:
+            current = db.execute("SELECT hash FROM chain_blocks WHERE height=?", (height,)).fetchone()
+            if current is None:
+                raise ValueError("index has a discontinuous height history")
+            if height > node_height or _rpc("getblockhash", [height]) != current["hash"]:
                 divergent_height = height
+                height -= 1
             else:
                 break
         if divergent_height is not None:
             with db:
-                _rollback_from(db, divergent_height)
+                _rollback_from(db, height + 1)
     return node_height
 
 
