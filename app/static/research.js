@@ -45,26 +45,34 @@ function providerResearch(coin){
 }
 async function loadSources(){
   const slot=$('sources-status');if(!slot)return;
-  slot.replaceChildren(el('p','Reading provider configuration and observed source activity…','provider-note'));
+  slot.replaceChildren(el('p','Checking availability…','ss-source-empty'));
   try{
     const data=await fetchJson('/api/sources/status');
-    slot.replaceChildren(...(data.sources||[]).map(src=>{
-      const card=wrap('provider-card',el('strong',src.name));
-      const statusName=src.status==='observed_recently'?'Observed recently':
-        src.status==='observed_earlier'?'Earlier observation':
-        src.status==='requestable'?'Available on request':
-        src.status==='api_key_required'?'API key required':
-        src.status==='operator_import_configured'?'Imported data configured':'Source permission needed';
-      const stateEl=el('span',statusName,'provider-state');
-      stateEl.classList.add(src.status==='observed_recently'?'provider-observed':'provider-pending');
-      card.append(stateEl,el('small',src.feature,'provider-feature'));
-      card.append(el('small',src.last_observed?
-        'Last response: '+new Date(src.last_observed*1000).toLocaleString():
-        'No successful observation recorded in this process','provider-seen'));
-      if(src.docs_url)card.append(link(src.docs_url,'Source website / API ↗'));
-      return card;
+    const sources=Array.isArray(data.sources)?data.sources:[];
+    const labels={
+      observed_recently:'Recently observed',observed_earlier:'Earlier observation',
+      requestable:'Available on request',api_key_required:'API key needed',
+      licensed_key_required:'Licensed key needed',
+      integration_pending:'Not connected',permissioned_import_required:'Not connected',
+      operator_import_configured:'Import configured'
+    };
+    slot.replaceChildren(...sources.map(src=>{
+      const row=wrap('ss-source-row',el('strong',src.name));
+      const text=labels[src.status]||'Not connected';
+      const badge=el('small',text,'ss-source-state');
+      if(src.status==='observed_recently')badge.classList.add('ss-source-online');
+      else badge.classList.add('ss-source-offline');
+      if(src.last_observed)badge.title='Last observed '+new Date(src.last_observed*1000).toLocaleString();
+      row.append(badge);
+      return row;
     }));
-  }catch(error){slot.replaceChildren(errorMessage('Provider status unavailable: '+error.message));}
+    const count=sources.filter(x=>x.status==='observed_recently').length;
+    setText('ss-source-count',sources.length+' sources · '+count+' recently observed');
+    if(!sources.length)slot.append(el('p','No provider information available.','ss-source-empty'));
+  }catch(error){
+    slot.replaceChildren(el('p','Provider status unavailable.','ss-source-empty'));
+    setText('ss-source-count','Provider status unavailable');
+  }
 }
 function errorMessage(text){return el('p',text,'notice error');}
 function display(...nodes){research.replaceChildren(...nodes);}
@@ -552,5 +560,10 @@ function start(){
   loadGlobal();loadSentiment();
   const tab=location.hash.slice(1);
   switchTab(titles[tab]?tab:'markets');
+  // Shared site header uses stable hash links instead of per-page tab markup.
+  window.addEventListener('hashchange',()=>{
+    const next=location.hash.slice(1);
+    if(titles[next])switchTab(next);
+  });
 }
 start();
