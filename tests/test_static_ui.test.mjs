@@ -202,3 +202,18 @@ test('keyless CoinLore default and compact source-status panel replace blank alp
   assert.match(readFileSync('app/static/data-hub.js','utf8'),/\/api\/coinlore\/quotes/);
   assert.match(shell,/More Research/);
 });
+
+
+test('Cloudflare-hosted exchange directory has shared navigation and separated sources',()=>{
+  const html=readFileSync('app/static/exchanges.html','utf8');
+  const js=readFileSync('app/static/exchanges.js','utf8');
+  const nav=readFileSync('app/static/site-shell.js','utf8');
+  assert.match(nav,/href="\.\/exchanges\.html"/);
+  assert.match(html,/id="exchange-results"/);
+  assert.match(html,/id="exchange-provider"/);
+  assert.match(html,/id="exchange-next"/);
+  assert.match(html,/src="\.\/exchanges\.js"/);
+  assert.match(js,/\/api\/exchanges\/cmc/);
+  assert.match(js,/\/api\/exchanges\/coingecko/);
+  assert.doesNotMatch(js,/innerHTML\s*=/);
+});
