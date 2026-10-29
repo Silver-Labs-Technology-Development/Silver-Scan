@@ -1,114 +1,208 @@
-import json, os
-from http.server import HTTPServer, BaseHTTPRequestHandler
-from urllib.parse import urlparse, parse_qs
-from app.config import HOST, PORT
+"""Silver Scan local read-only HTTP server.
+
+The server is intentionally loopback-only by default and must NOT be exposed
+directly as a production API. Put a reviewed authenticated/rate-limited proxy
+in front before considering any public deployment.
+"""
+from __future__ import annotations
+
+import json
+import re
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
+from urllib.parse import parse_qs, unquote, urlsplit
+
 from app import adapters as A
+from app import config
 from app import indexer as I
 from app import market_data as M
-I.init_db()
+
+STATIC = Path(__file__).resolve().parent / "static"
+HEX_HASH = re.compile(r"^[0-9a-fA-F]{64}$")
+ADDRESS = re.compile(r"^[A-Za-z0-9]{20,128}$")
+
 
 class Handler(BaseHTTPRequestHandler):
-    def _send(self, code, body, ctype="application/json"):
-        data = body.encode() if isinstance(body, str) else body
-        self.send_response(code)
-        self.send_header("Content-Type", ctype)
-        self.send_header("Content-Length", str(len(data)))
+    def _send(self, status, body, content_type="application/json; charset=utf-8"):
+        if isinstance(body, (dict, list)):
+            body = json.dumps(body, allow_nan=False)
+        raw = body.encode("utf-8") if isinstance(body, str) else body
+        self.send_response(status)
+        self.send_header("Content-Type", content_type)
+        self.send_header("Content-Length", str(len(raw)))
+        self.send_header("Cache-Control", "no-store")
+        self.send_header("X-Content-Type-Options", "nosniff")
+        self.send_header("Referrer-Policy", "no-referrer")
+        self.send_header("X-Frame-Options", "DENY")
+        if content_type.startswith("text/html"):
+            self.send_header(
+                "Content-Security-Policy",
+                "default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; "
+                "connect-src 'self'; img-src 'self' data:; base-uri 'none'; "
+                "form-action 'self'; frame-ancestors 'none'",
+            )
         self.end_headers()
-        self.wfile.write(data)
+        self.wfile.write(raw)
+
+    def _error(self, status, message):
+        self._send(status, {"error": message})
+
+    def _query_int(self, values, key, default, low, high):
+        raw = (values.get(key) or [str(default)])[0]
+        if not raw.isascii() or not raw.isdecimal():
+            raise ValueError(f"{key} must be an integer")
+        value = int(raw)
+        if not low <= value <= high:
+            raise ValueError(f"{key} must be between {low} and {high}")
+        return value
+
+    def _network(self, query):
+        selected = (query.get("network") or [A.NETWORKS[0].id])[0]
+        network = A.get_network(selected)
+        if network is None:
+            raise ValueError("Unknown network")
+        return network
+
+    def _btcs(self, query):
+        network = self._network(query)
+        if network.family != "utxo":
+            raise ValueError("This endpoint currently supports BTCS L1 only")
+        return network
+
+    def _static(self, filename, media_type):
+        self._send(200, (STATIC / filename).read_bytes(), media_type)
+
+    def _route(self, path, query):
+        if path in ("/", "/index.html"):
+            self._static("index.html", "text/html; charset=utf-8")
+            return
+        if path == "/research.js":
+            self._static("research.js", "application/javascript; charset=utf-8")
+            return
+        if path == "/explorer.js":
+            self._static("explorer.js", "application/javascript; charset=utf-8")
+            return
+
+        if path == "/api/networks":
+            self._send(200, [n.to_dict() for n in A.NETWORKS])
+            return
+        if path == "/api/markets":
+            self._send(200, M.markets(self._query_int(query, "limit", 50, 1, 100)))
+            return
+        if path == "/api/dex/search":
+            self._send(200, M.dex_search((query.get("q") or [""])[0]))
+            return
+        if path == "/api/health":
+            network = self._network(query)
+            if network.family == "utxo":
+                self._send(200, A.btcs_health())
+            else:
+                self._send(200, A.evm_health())  # explicitly fixture-backed demo
+            return
+        if path == "/api/blocks/recent":
+            self._btcs(query)
+            limit = self._query_int(query, "limit", 10, 1, 50)
+            self._send(200, A.btcs_recent_blocks(limit))
+            return
+        if path.startswith("/api/block/"):
+            network = self._network(query)
+            ident = unquote(path[len("/api/block/"):])
+            if not (ident.isascii() and ident.isdecimal() and len(ident) <= 10) and not HEX_HASH.fullmatch(ident):
+                raise ValueError("Block must be a height or 64-character hash")
+            if network.family == "utxo":
+                self._send(200, A.btcs_block(ident))
+            else:
+                self._send(200, A.evm_block(ident))
+            return
+        if path.startswith("/api/tx/"):
+            self._btcs(query)
+            txid = unquote(path[len("/api/tx/"):])
+            if not HEX_HASH.fullmatch(txid):
+                raise ValueError("Invalid transaction ID")
+            self._send(200, A.btcs_tx(txid))
+            return
+        if path == "/api/search":
+            self._btcs(query)
+            term = (query.get("q") or [""])[0].strip()
+            if term.isascii() and term.isdecimal() and len(term) <= 10:
+                self._send(200, {"type": "block", "result": A.btcs_block(term)})
+            elif HEX_HASH.fullmatch(term):
+                try:
+                    result = A.btcs_tx(term)
+                    self._send(200, {"type": "tx", "result": result})
+                except (ValueError, A.rpc.RpcError):
+                    self._send(200, {"type": "block", "result": A.btcs_block(term)})
+            elif ADDRESS.fullmatch(term):
+                self._send(200, {"type": "address", "result": self._address(term, 50, 0)})
+            else:
+                raise ValueError("Search accepts block height, hash, transaction ID or address")
+            return
+        if path == "/api/index/status":
+            self._btcs(query)
+            tip = I.get_tip_info()
+            node = A.btcs_health()
+            chain_tip = node.get("blocks")
+            index_height = tip["height"] if tip is not None else -1
+            self._send(200, {
+                "tip": index_height,
+                "hash": tip["hash"] if tip else None,
+                "chain_tip": chain_tip,
+                "behind_blocks": max(chain_tip - index_height, 0) if isinstance(chain_tip, int) else None,
+                "caught_up": index_height == chain_tip,
+                "source": "BTCS Core RPC + local SQLite index",
+                "note": "Not a consensus proof. Chain reorganizations are reconciled by the CLI sync.",
+            })
+            return
+        if path == "/api/index/sync":
+            self._error(405, "Index writes are disabled over HTTP; use the local CLI")
+            return
+        if path.startswith("/api/address/"):
+            self._btcs(query)
+            address = unquote(path[len("/api/address/"):])
+            limit = self._query_int(query, "limit", 50, 1, 100)
+            offset = self._query_int(query, "offset", 0, 0, 100000)
+            self._send(200, self._address(address, limit, offset))
+            return
+        self._error(404, "Not found")
+
+    def _address(self, address, limit, offset):
+        if not ADDRESS.fullmatch(address):
+            raise ValueError("Invalid address format")
+        validity = A.rpc.call(
+            config.BTCS_RPC_URL, config.BTCS_RPC_USER, config.BTCS_RPC_PASSWORD,
+            "validateaddress", [address],
+        )
+        if not isinstance(validity, dict) or not validity.get("isvalid"):
+            raise ValueError("Invalid BTCS address")
+        return I.address_balance(address, limit, offset)
 
     def do_GET(self):
-        p = urlparse(self.path)
-        path = p.path
-        qs = parse_qs(p.query)
+        url = urlsplit(self.path)
         try:
-            if path == "/":
-                with open(os.path.join(os.path.dirname(__file__), "static", "index.html")) as f:
-                    self._send(200, f.read(), "text/html"); return
-            if path == "/research.js":
-                with open(os.path.join(os.path.dirname(__file__), "static", "research.js"), encoding="utf-8") as f:
-                    self._send(200, f.read(), "application/javascript; charset=utf-8")
-                return
-            if path == "/api/networks":
-                self._send(200, json.dumps([n.to_dict() for n in A.NETWORKS])); return
-            if path == "/api/markets":
-                try:
-                    limit = int((qs.get("limit") or ["50"])[0])
-                    result = M.markets(limit)
-                    self._send(200, json.dumps(result))
-                except ValueError as exc:
-                    self._send(400, json.dumps({"error": str(exc)}))
-                except M.ProviderUnavailable:
-                    self._send(503, json.dumps({"error": "Market data temporarily unavailable", "source": "CoinGecko"}))
-                return
-            if path == "/api/dex/search":
-                try:
-                    result = M.dex_search((qs.get("q") or [""])[0])
-                    self._send(200, json.dumps(result))
-                except ValueError as exc:
-                    self._send(400, json.dumps({"error": str(exc)}))
-                except M.ProviderUnavailable:
-                    self._send(503, json.dumps({"error": "DEX data temporarily unavailable", "source": "DEX Screener"}))
-                return
-            if path == "/api/health":
-                net = (qs.get("network") or ["btcs-regtest"])[0]
-                if net.startswith("btcs"):
-                    self._send(200, json.dumps(A.btcs_health())); return
-                self._send(200, json.dumps(A.evm_health())); return
-            if path == "/api/blocks/recent":
-                self._send(200, json.dumps(A.btcs_recent_blocks(5))); return
-            if path.startswith("/api/block/"):
-                ident = path.split("/api/block/",1)[1]
-                net = (qs.get("network") or ["btcs-regtest"])[0]
-                if net.startswith("btcs"):
-                    self._send(200, json.dumps(A.btcs_block(ident))); return
-                self._send(200, json.dumps(A.evm_block(ident))); return
-            if path.startswith("/api/tx/"):
-                txid = path.split("/api/tx/",1)[1]
-                self._send(200, json.dumps(A.btcs_tx(txid))); return
+            self._route(url.path, parse_qs(url.query, max_num_fields=12))
+        except ValueError as exc:
+            self._error(400, str(exc))
+        except M.ProviderUnavailable:
+            self._error(503, "External market data unavailable; try again later")
+        except (A.rpc.RpcError, ConnectionError, OSError, TimeoutError):
+            self._error(503, "Required node or index service unavailable")
+        except Exception:
+            # Never send raw RPC exceptions, stack traces or local paths to browsers.
+            self._error(500, "Internal Silver Scan error")
 
-            if path == "/api/search":
-                q = (qs.get("q") or [""])[0].strip()
-                net = (qs.get("network") or ["btcs-regtest"])[0]
-                if q.isdigit():
-                    self._send(200, json.dumps({"type":"block","result":A.btcs_block(q)})); return
-                if len(q)==64:
-                    try:
-                        self._send(200, json.dumps({"type":"tx","result":A.btcs_tx(q)})); return
-                    except Exception:
-                        try:
-                            self._send(200, json.dumps({"type":"block","result":A.btcs_block(q)})); return
-                        except Exception as e:
-                            self._send(404, json.dumps({"error":str(e)})); return
-                self._send(400, json.dumps({"error":"unrecognized identifier"})); return
-            if path == "/api/index/status":
-                self._send(200, json.dumps({"tip": I.get_tip(), "db": I.DB_PATH})); return
-            if path == "/api/index/sync":
-                tip = I.sync_to_tip()
-                self._send(200, json.dumps({"syncedTip": tip})); return
-            if path.startswith("/api/address/"):
-                addr = path.split("/api/address/",1)[1]
-                # try indexed first
-                try:
-                    res = I.address_balance(addr)
-                    if res["txCount"]>0 or True:
-                        self._send(200, json.dumps(res)); return
-                except Exception:
-                    pass
-                try:
-                    self._send(200, json.dumps(A.btcs_address(addr))); return
-                except Exception as e:
-                    self._send(400, json.dumps({"error": str(e)})); return
-            self._send(404, json.dumps({"error":"not found"}))
-        except Exception as e:
-            self._send(500, json.dumps({"error": str(e)}))
+    def do_POST(self):
+        self._error(405, "Silver Scan HTTP API is read-only")
 
-    def log_message(self, *a):
+    def log_message(self, format, *args):
         pass
 
+
 def run():
-    httpd = HTTPServer((HOST, PORT), Handler)
-    print(f"Silver Scan running on http://{HOST}:{PORT}")
+    I.init_db()
+    httpd = ThreadingHTTPServer((config.HOST, config.PORT), Handler)
+    print(f"Silver Scan development server running on http://{config.HOST}:{config.PORT}")
     httpd.serve_forever()
+
 
 if __name__ == "__main__":
     run()
