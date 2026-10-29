@@ -3,13 +3,13 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#f7f9fc">
-  <meta name="description" content="Silver Scan: cryptocurrency prices, real market charts, coin research, Bitcoin Silver mining data and blockchain exploration.">
-  <title>Silver Scan | Crypto Markets, Mining & Blockchain Explorer</title>
+  <meta name="theme-color" content="#0e1e31">
+  <meta name="description" content="SilverScan: cryptocurrency prices, real market charts, coin research, Bitcoin Silver mining data and blockchain exploration.">
+  <title>SilverScan | Crypto Markets, Mining & Blockchain Explorer</title>
   <link rel="stylesheet" href="./styles.css">
   <script type="module" src="./explorer.js"></script>
   <script type="module" src="./research.js"></script>
-</head>
+<link rel="stylesheet" href="./theme.css"></head>
 <body>
   <a class="skip-link" href="#research-view">Skip to main content</a>
   <div class="utility-bar">
@@ -25,7 +25,7 @@
   </div>
   <header class="site-header">
     <div class="shell header-main">
-      <a class="brand" href="./" aria-label="Silver Scan homepage">
+      <a class="brand" href="./" aria-label="SilverScan homepage">
         <span class="brand-mark" aria-hidden="true"><span>S</span></span>
         <span class="brand-type"><strong>SILVER<span>SCAN</span></strong><small>CRYPTO INTELLIGENCE · SILVER LABS</small></span>
       </a>
@@ -42,26 +42,24 @@
       </div>
     </div>
     <div class="nav-wrap">
-      <nav class="shell research-nav" aria-label="Silver Scan sections">
+      <nav class="shell research-nav" aria-label="SilverScan sections">
         <button type="button" data-tab="markets" class="selected" aria-pressed="true">Markets</button>
+        <a href="./coin-watch.html">Coin Watch</a>
         <button type="button" data-tab="heatmap" aria-pressed="false">Heatmap</button>
-        <button type="button" data-tab="watch" aria-pressed="false">Coin Watch</button>
-        <button type="button" data-tab="mining" aria-pressed="false">Mining & Pools</button>
+        <a href="./news.html">Crypto News</a>
+        <a href="./mining.html">Mining &amp; ROI</a>
         <button type="button" data-tab="dex" aria-pressed="false">DEX Scan</button>
-        <button type="button" data-tab="explorer" aria-pressed="false">Block Explorer</button>
-        <a class="feature-link-nav" href="./data-hub.html#universe">Coin Universe</a>
-        <a class="feature-link-nav" href="./data-hub.html#news">Crypto News</a>
-        <a class="feature-link-nav" href="./data-hub.html#mining">Mining Estimator</a>
-        <a class="feature-link-nav" href="./features.html">All Features <span aria-hidden="true">↗</span></a>
+        <button type="button" data-tab="explorer" aria-pressed="false">Explorer</button>
+        <a href="./features.html">All Features</a>
       </nav>
     </div>
   </header>
   <div class="shell workspace">
     <div class="page-intro" id="page-intro">
       <div>
-        <div class="section-kicker"><span class="status-indicator"></span> SILVER SCAN / RESEARCH CENTER</div>
+        <div class="section-kicker"><span class="status-indicator"></span> SILVERSCAN / RESEARCH CENTER</div>
         <h1 id="page-title">Cryptocurrency Prices by Market Cap</h1>
-        <p id="page-description" class="muted">Research markets and blockchain activity across multiple providers. <a href="./data-hub.html#universe">Explore low-ranked coins and tokens, including BTCS →</a></p>
+        <p id="page-description" class="muted">Research markets and blockchain activity across multiple providers. <a href="./coin-watch.html">Explore low-ranked coins and tokens, including BTCS →</a></p>
       </div>
       <div class="intro-side"><span class="tiny-label">DATA AVAILABILITY</span><strong id="data-state">Connecting to providers</strong><small id="last-updated">Updated: —</small></div>
     </div>
@@ -101,17 +99,17 @@
       <div class="loading-panel">Loading market data…</div>
     </main>
     <main id="view" hidden aria-live="polite"><div class="loading-panel">Checking node connection…</div></main>
-    <div class="scan-hub-promo"><div><p class="eyebrow">DISCOVER MORE</p><h2>Beyond market-cap rankings.</h2><p>Bitcoin Silver is available by unique CoinGecko ID even when it ranks outside the first thousand. Search the full catalog, browse CoinMarketCap markets, Coinbase spot pairs, read crypto news and compare mining assumptions.</p></div><a href="./data-hub.html">Open Silver Scan Coin Universe →</a></div><div class="data-disclaimer">
-      <strong>Silver Scan is an independent Silver Labs product.</strong> Prices and DEX data are attributed external research, not SilvEx trades. The BTCS L1 explorer is a node-backed development implementation. Market listing does not verify token legitimacy or promise trading, mining rewards, settlement or custody.
+    <div class="scan-hub-promo"><div><p class="eyebrow">DISCOVER MORE</p><h2>Beyond market-cap rankings.</h2><p>Bitcoin Silver is available by unique CoinGecko ID even when it ranks outside the first thousand. Search the full catalog, browse CoinMarketCap markets, Coinbase spot pairs, read crypto news and compare mining assumptions.</p></div><a href="./coin-watch.html">Explore Coin Watch →</a></div><div class="data-disclaimer">
+      <strong>SilverScan is an independent Silver Labs product.</strong> Prices and DEX data are attributed external research, not SilvEx trades. The BTCS L1 explorer is a node-backed development implementation. Market listing does not verify token legitimacy or promise trading, mining rewards, settlement or custody.
     </div>
   </div>
   <footer class="site-footer">
     <div class="shell footer-content">
-      <div><strong>SILVER SCAN</strong><p>One research workspace. Multiple networks. Verifiable sources.</p></div>
+      <div><strong>SILVERSCAN</strong><p>One research workspace. Multiple networks. Verifiable sources.</p></div>
       <div class="footer-links">
         <a href="https://github.com/Silver-Labs-Technology-Development/Silver-Scan" target="_blank" rel="noopener noreferrer">Source & roadmap</a>
         <a href="https://www.coingecko.com/" target="_blank" rel="noopener noreferrer">Market data: CoinGecko</a>
-        <a href="./data-hub.html">News &amp; Coin Universe</a>
+        <a href="./coin-watch.html">News &amp; Coin Universe</a>
         <a href="https://dexscreener.com/" target="_blank" rel="noopener noreferrer">DEX data: DEX Screener</a>
       </div>
     </div>
