@@ -27,6 +27,7 @@ jobs:
         run: |
           node --check app/static/research.js
           node --check app/static/explorer.js
+          node --check app/static/charts.js
           node --test tests/test_static_ui.test.mjs
       # Existing tests/test_adapters.py requires a running Bitcoin Silver regtest
       # node on localhost:18443. It is exercised separately by the operator.
