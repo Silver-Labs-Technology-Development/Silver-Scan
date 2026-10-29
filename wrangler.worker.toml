@@ -1,0 +1,14 @@
+# SilverScan existing Cloudflare Workers service — PUBLIC VIEWING ALPHA.
+# Deploy using: npx wrangler deploy --config wrangler.worker.toml
+# Service name matches existing Cloudflare Workers script: silver-scan.
+# This config does NOT contain API keys or account credentials.
+name = "silver-scan"
+main = "./app/static/_worker.js"
+compatibility_date = "2026-10-29"
+
+[assets]
+directory = "./app/static"
+binding = "ASSETS"
+# Routes for non-API assets are served from Cloudflare's edge cache.
+# API routes run the fail-closed public Worker.
+run_worker_first = ["/api/*"]
