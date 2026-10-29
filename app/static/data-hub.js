@@ -79,7 +79,7 @@ async function loadUniverse({search=null,next=false}={}){
     const data=await get(url);
     const rows=source==='coinbase'?data.pairs||[]:data.assets||[];
     panel.replaceChildren(meta(data),rows.length?assetTable(rows,source==='coinbase'?'pairs':'assets'):el('p','No active records returned from the provider on this page.','hub-note'));
-    button.disabled=rows.length===0||rows.length<100;
+    button.disabled=!data.has_more;
     $('universe-source').textContent=data.source||source;
     pageInfo.textContent='Source page '+(currentPage+1)+' · '+rows.length+' records returned';
   }catch(error){
