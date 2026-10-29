@@ -8,6 +8,7 @@ Run with: python -m app.indexer --max-blocks 100
 from __future__ import annotations
 
 import argparse
+from contextlib import closing
 from decimal import Decimal, InvalidOperation
 import os
 import sqlite3
@@ -33,7 +34,7 @@ def init_db():
     Old prototype blocks/txs/outputs remain untouched and are intentionally
     excluded from balances, until a deliberate reindex from genesis completes.
     """
-    with conn() as db:
+    with closing(conn()) as db:
         db.executescript("""
         CREATE TABLE IF NOT EXISTS chain_blocks (
             height INTEGER PRIMARY KEY,
@@ -87,13 +88,13 @@ def _satoshis(value):
 
 
 def get_tip():
-    with conn() as db:
+    with closing(conn()) as db:
         result = db.execute("SELECT MAX(height) FROM chain_blocks").fetchone()[0]
     return result if result is not None else -1
 
 
 def get_tip_info():
-    with conn() as db:
+    with closing(conn()) as db:
         row = db.execute(
             "SELECT height,hash,time FROM chain_blocks ORDER BY height DESC LIMIT 1"
         ).fetchone()
@@ -118,7 +119,7 @@ def _canonical_tip():
         raise ValueError("node did not return a chain height") from exc
     if node_height < 0:
         raise ValueError("invalid node chain height")
-    with conn() as db:
+    with closing(conn()) as db:
         rows = db.execute("SELECT height,hash FROM chain_blocks ORDER BY height DESC").fetchall()
         divergent_height = None
         for row in rows:
@@ -165,7 +166,7 @@ def index_block(height):
                 inputs.append((position, str(entry["txid"]), int(entry["vout"])))
         parsed.append((transaction["txid"], outputs, inputs))
 
-    with conn() as db:
+    with closing(conn()) as db:
         with db:
             last = db.execute(
                 "SELECT height,hash FROM chain_blocks ORDER BY height DESC LIMIT 1"
@@ -236,7 +237,7 @@ def address_balance(address, limit=50, offset=0):
         raise ValueError("limit must be 1..100")
     if type(offset) is not int or not 0 <= offset <= 100000:
         raise ValueError("offset must be 0..100000")
-    with conn() as db:
+    with closing(conn()) as db:
         total = db.execute(
             "SELECT COALESCE(SUM(value_sats),0) FROM chain_outputs WHERE address=? AND spent_by IS NULL",
             (address,),
