@@ -82,3 +82,33 @@ Do not automatically map all matching symbols; `BTC` and `XBT` here are exchange
 Next independent slices: order-book depth with exchange license/fees, historical snapshot aggregation, verified token unlock calendar, on-chain holder distribution with checkpointed coverage, and chain activity indexes.
 
 Avoid duplicating Cline's work on the Ethereum, Solana and BTCS indexers. Never replace his local `app/server.py` or `app/service.py` with older GitHub files.
+
+## New implementation: historical sample series and market performance heatmap
+
+`app/market_history.py` is a **new, strictly read-only** module using the same `data/venue_observations.sqlite3` database as the direct Coinbase/Kraken collector. It requires no separate migration. Two more local API adapters are available (but not automatically mounted in Cline's running server):
+
+- `GET /api/insights/local/series?venue=coinbase&market=BTC-USD&window=24h&limit=180` — returns only genuine stored sample points and exposes time gaps, staleness and coverage for 1h, 24h, 7d, 30d, 90d and 1y. Missing historical intervals stay missing. Data is `sampled_last_traded_price`, **not an exchange candle series**.
+- `GET /api/insights/local/heatmap?venue=coinbase&window=24h&quote=USD&limit=100` — a single-venue, same-quote, unweighted pair performance map with percent changes based on comparable observed samples, freshness checks and honest exclusions. This is **not** CoinMarketCap's market-cap-weighted top-100 heatmap.
+
+The server can mount these without replacing existing routes or frontend code:
+
+```python
+from app.market_history import HistoryStore, handle_get as history_get
+history_store = HistoryStore(db_path)
+
+# In existing read-only GET dispatch, after validating route ownership:
+result = history_get(request_path_with_query, history_store)
+if result is not None:
+    status, body = result
+    # Serialize using current local server's secure JSON response helper.
+```
+
+Offline test contract:
+
+```bash
+python3 -m pytest -q tests/test_market_history.py tests/test_market_insights.py tests/test_feature_catalog.py
+```
+
+Only integrate into the **approved production-equivalent frontend**. Before drawing a history chart, label it as sampled price observations, show the first and last observation timestamps, and leave gaps visible. For the heatmap, keep each exchange separate, show quote currency and sample-coverage disclosure, never use market-cap sizing without confirmed supply and price data, and never represent the partial sampled pair list as the global top 100.
+
+**Cline's reported environment, not independently verified:** local port 8084; 84 passing tests and one skipped; BTCS regtest at 127.0.0.1:19443; configured EVM/Solana RPC addresses. Do not assume mainnet or all RPC sources are connected merely because configured. Cline should separately validate visual parity by screenshot diff and solve the `Loading SilverScan…` and empty market-feed states.
