@@ -137,6 +137,15 @@ class Handler(BaseHTTPRequestHandler):
         if path in ("/", "/index.html"):
             self._static("index.html", "text/html; charset=utf-8")
             return
+        if path == "/markets.html":
+            self._static("markets.html", "text/html; charset=utf-8")
+            return
+        if path == "/landing.css":
+            self._static("landing.css", "text/css; charset=utf-8")
+            return
+        if path == "/landing.js":
+            self._static("landing.js", "application/javascript; charset=utf-8")
+            return
         if path == "/exchanges.html":
             self._static("exchanges.html", "text/html; charset=utf-8")
             return
