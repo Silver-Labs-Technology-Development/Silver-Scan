@@ -164,3 +164,43 @@ test('public worker does not allow local account registration or the universal R
     assert.equal(content.alpha,true);
   }
 });
+
+
+test('public exchange records come from the keyless CMC exchange map, without fabricated scores',async()=>{
+  const original=globalThis.fetch;
+  globalThis.fetch=async(request)=>{
+    assert.match(String(request),/^https:\/\/pro-api\.coinmarketcap\.com\/public-api\/v1\/exchange\/map\?/);
+    return new Response(JSON.stringify({data:[
+      {id:270,name:'Observed Exchange',slug:'observed-exchange',is_active:1},
+      {id:271,name:'Another Venue',slug:'another-venue',is_active:0}
+    ]}),{status:200});
+  };
+  try {
+    const response=await worker.fetch(req('/api/exchanges/cmc?page=1&limit=25'),env);
+    assert.equal(response.status,200);
+    const data=await parsed(response);
+    assert.equal(data.exchanges.length,2);
+    assert.equal(data.exchanges[0].id,'coinmarketcap:270');
+    assert.equal(data.exchanges[0].rank,null);
+    assert.equal(data.exchanges[0].trade_volume_24h_btc,null);
+    assert.equal(data.exchanges[0].trust_score,null);
+    assert.equal(data.has_more,false);
+  } finally {globalThis.fetch=original}
+});
+
+test('CoinGecko exchange metrics remain optional with provider permission',async()=>{
+  const blocked=await worker.fetch(req('/api/exchanges/coingecko?page=1&limit=25'),env);
+  assert.equal(blocked.status,503);
+  const original=globalThis.fetch;
+  globalThis.fetch=async()=>new Response(JSON.stringify([{id:'example',name:'Example',
+    trust_score_rank:2,trust_score:8,trade_volume_24h_btc:12.5}]),{status:200});
+  try {
+    const response=await worker.fetch(req('/api/exchanges/coingecko?page=1&limit=25'),
+      {...env,COINGECKO_API_KEY:'TEST-KEY',CG_COMMERCIAL_USE_APPROVED:'yes'});
+    assert.equal(response.status,200);
+    const data=await parsed(response);
+    assert.equal(data.exchanges[0].id,'coingecko:example');
+    assert.equal(data.exchanges[0].rank,2);
+    assert.equal(data.exchanges[0].trade_volume_24h_btc,12.5);
+  } finally {globalThis.fetch=original}
+});
