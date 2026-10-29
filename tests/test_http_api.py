@@ -92,6 +92,9 @@ def test_static_assets_are_served_and_safe(api_server):
         ("/explorer.js", "application/javascript"),
         ("/research.js", "application/javascript"),
         ("/charts.js", "application/javascript"),
+        ("/features.html", "text/html"),
+        ("/features.css", "text/css"),
+        ("/features.js", "application/javascript"),
     ]:
         status, headers, body = request(api_server, path)
         assert status == 200
