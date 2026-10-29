@@ -60,6 +60,7 @@ function switchTab(tab) {
     button.classList.toggle('selected', active)
   })
   explorer.hidden = tab !== 'explorer'
+  document.getElementById('explorer-controls').hidden = tab !== 'explorer'
   research.hidden = tab === 'explorer'
   if (tab === 'markets') loadMarkets()
   if (tab === 'watch') loadWatch()
