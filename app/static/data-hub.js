@@ -66,6 +66,14 @@ function assetTable(rows,kind){
         star.setAttribute('aria-pressed',String(active));
         star.addEventListener('click',()=>{toggleWatch(data.id);star.textContent=watched().includes(data.id)?'★':'☆';star.setAttribute('aria-pressed',String(watched().includes(data.id)));});
         c.append(star);
+        if($('portfolio')){
+          const add=el('button','+ Portfolio','hub-portfolio-pick');
+          add.type='button';add.setAttribute('aria-label','Add '+(data.name||data.id)+' to manual portfolio');
+          add.addEventListener('click',()=>document.dispatchEvent(new CustomEvent('portfolio:select',{
+            detail:{id:data.id,name:data.name,symbol:data.symbol}
+          })));
+          c.append(add);
+        }
       }else c.textContent='—';
       tr.append(c);
     }
