@@ -27,11 +27,11 @@ function addCell(row,text){
 const WATCH_KEY='silver-scan-coin-watch-v1';
 const watched=()=>{
   try{const ids=JSON.parse(localStorage.getItem(WATCH_KEY)||'[]');
-    return Array.isArray(ids)?ids.filter(id=>typeof id==='string'&&/^coingecko:[a-z0-9-]{1,100}$/.test(id)).slice(0,50):[];}
+    return Array.isArray(ids)?ids.filter(id=>typeof id==='string'&&/^(?:coingecko:[a-z0-9-]{1,100}|coinlore:[0-9]{1,18})$/.test(id)).slice(0,50):[];}
   catch{return [];}
 };
 function toggleWatch(id){
-  if(!/^coingecko:[a-z0-9-]{1,100}$/.test(id))return;
+  if(!/^(?:coingecko:[a-z0-9-]{1,100}|coinlore:[0-9]{1,18})$/.test(id))return;
   const ids=watched(),next=ids.includes(id)?ids.filter(x=>x!==id):[...ids,id].slice(0,50);
   try{localStorage.setItem(WATCH_KEY,JSON.stringify(next));}catch{return;}
   renderWatch();
@@ -58,7 +58,7 @@ function assetTable(rows,kind){
       addCell(tr,data.id||'—');addCell(tr,data.rank??'—');
       addCell(tr,usd(data.price_usd));addCell(tr,usd(data.volume_24h_usd));addCell(tr,pct(data.change_24h_pct));
       const c=el('td');
-      if(typeof data.id==='string'&&data.id.startsWith('coingecko:')){
+      if(typeof data.id==='string'&&(data.id.startsWith('coingecko:')||data.id.startsWith('coinlore:'))){
         const active=watched().includes(data.id);
         const star=el('button',active?'★':'☆','hub-watch-star');
         star.type='button';star.title=active?'Remove from Coin Watch':'Add to Coin Watch';
@@ -87,27 +87,38 @@ async function renderWatch(){
   if(!ids.length){
     panel.replaceChildren(el('p','Your watchlist is empty. Search the catalog below and select ☆ to save a coin.','hub-note'));return;
   }
-  panel.replaceChildren(el('p','Looking up '+ids.length+' watched provider identifiers…','hub-note'));
-  try{
-    const result=await get('/api/coin-watch/quotes?ids='+encodeURIComponent(ids.map(x=>x.slice('coingecko:'.length)).join(',')));
-    const assets=result.assets||[];
-    panel.replaceChildren(meta(result),assets.length?assetTable(assets,'assets'):el('p','No current market quotes for saved provider IDs. The coins remain saved locally.','hub-note'));
-    const missing=ids.filter(id=>!assets.some(a=>a.id===id));
-    if(missing.length){
-      const wrap=el('div',null,'hub-missing');
-      wrap.append(el('h3','Saved IDs without live quotes'));
-      for(const id of missing){
-        const row=box('hub-missing-row',el('code',id));
-        const b=el('button','Remove','hub-watch-star');b.type='button';b.addEventListener('click',()=>toggleWatch(id));
-        row.append(b);wrap.append(row);
-      }
-      panel.append(wrap);
+  panel.replaceChildren(el('p','Checking '+ids.length+' saved provider IDs…','hub-note'));
+  const sources=[
+    {prefix:'coinlore:',url:'/api/coinlore/quotes?ids='},
+    {prefix:'coingecko:',url:'/api/coin-watch/quotes?ids='}
+  ];
+  const result=[];
+  const warnings=[];
+  for(const source of sources){
+    const subset=ids.filter(id=>id.startsWith(source.prefix));
+    if(!subset.length)continue;
+    try{
+      const data=await get(source.url+encodeURIComponent(subset.map(id=>id.slice(source.prefix.length)).join(',')));
+      result.push(...(data.assets||[]));
+    }catch(error){warnings.push(source.prefix.slice(0,-1)+' quotes temporarily unavailable');}
+  }
+  panel.replaceChildren(
+    result.length?assetTable(result,'assets'):el('p','Saved coins have no current provider quotes; entries remain stored in this browser.','hub-note'));
+  const missing=ids.filter(id=>!result.some(asset=>asset.id===id));
+  if(missing.length){
+    const list=box('hub-missing',el('h3','Saved IDs without a current quote'));
+    for(const id of missing){
+      const row=box('hub-missing-row',el('code',id));
+      const b=el('button','Remove','hub-watch-star');
+      b.type='button';b.addEventListener('click',()=>toggleWatch(id));
+      row.append(b);list.append(row);
     }
-  }catch(e){panel.replaceChildren(el('p','Watchlist provider unavailable: '+e.message,'hub-error'),
-    el('p','Saved locally: '+ids.join(', '),'hub-note'));}
+    panel.append(list);
+  }
+  if(warnings.length)panel.append(el('p',warnings.join(' · '),'hub-note'));
+  panel.append(el('p','Watchlist is saved only in your browser. Market data is provider-reported and does not verify ownership.','hub-meta'));
 }
-
-let currentPage=0,currentSource='cg';
+let currentPage=0,currentSource='lore';
 const pageInfo=$('universe-progress');
 async function loadUniverse({search=null,next=false}={}){
   const source=$('market-source').value;
@@ -122,15 +133,16 @@ async function loadUniverse({search=null,next=false}={}){
   try{
     let url;
     if(search!==null){
-      url='/api/catalog/search?q='+encodeURIComponent(search)+'&limit=40';
+      url=(source==='lore'?'/api/coinlore/search?q=':'/api/catalog/search?q=')+encodeURIComponent(search)+'&limit=40';
       const data=await get(url);
       const rows=data.matches||[];
       panel.replaceChildren(meta(data),rows.length?assetTable(rows,'assets'):el('p','No provider IDs matched your search.','hub-note'));
       pageInfo.textContent=rows.length+' matching catalog IDs'+(typeof data.catalog_count==='number'?' from '+data.catalog_count.toLocaleString('en-US')+' provider catalog IDs':'')+' · active trading not verified';
-      $('universe-source').textContent='CoinGecko /coins/list';
+      $('universe-source').textContent=data.source||'Catalog search';
       return;
     }
-    url=source==='cg'?'/api/catalog/page?page='+(currentPage+1)+'&limit=100':
+    url=source==='lore'?'/api/coinlore/markets?page='+(currentPage+1)+'&limit=100':
+      source==='cg'?'/api/catalog/page?page='+(currentPage+1)+'&limit=100':
       source==='cmc'?'/api/coinmarketcap/active?page='+(currentPage+1)+'&limit=100':
       '/api/coinbase/pairs?offset='+(currentPage*100)+'&limit=100';
     const data=await get(url);
