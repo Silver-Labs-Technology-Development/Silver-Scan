@@ -281,14 +281,14 @@ function sources(env){
   const list=[
     {name:"CoinLore",feature:"Live ranked coins and global totals; no API key",access:"requestable",status:"requestable",last_observed:null,docs_url:"https://www.coinlore.com/cryptocurrency-data-api"},
     {name:"CoinGecko",feature:"Market-cap prices, rankings and global stats",access:cg?"requestable":"licensed_key_required",status:cg?"requestable":"api_key_required",last_observed:null,docs_url:"https://www.coingecko.com/en/api"},
-    {name:"CoinMarketCap",feature:"Additional research and exchange coverage",access:"integration_pending",status:"integration_pending",last_observed:null,docs_url:"https://coinmarketcap.com/api/"},
-    {name:"Coinbase",feature:"Exchange spot pairs (not global coin counts)",access:"integration_pending",status:"integration_pending",last_observed:null,docs_url:"https://www.coinbase.com/"},
-    {name:"LiveCoinWatch",feature:"Market rankings, optional approved provider plan",access:"integration_pending",status:"integration_pending",last_observed:null,docs_url:"https://www.livecoinwatch.com/tools/api"},
+    {name:"CoinMarketCap",feature:"Keyless coin listings and exchange identities (quota/terms apply)",access:"requestable",status:"requestable",last_observed:null,docs_url:"https://coinmarketcap.com/api/keyless/"},
+    {name:"Coinbase",feature:"Public Coinbase Advanced Trade spot pairs (not unique coin counts)",access:"requestable",status:"requestable",last_observed:null,docs_url:"https://docs.cdp.coinbase.com/api-reference/advanced-trade-api/rest-api/public/list-public-products"},
+    {name:"LiveCoinWatch",feature:"Market rankings and observed quotes; keyed and display-approval gated",access:lcwEnabled(env)?"requestable":"api_key_required",status:lcwEnabled(env)?"requestable":"api_key_required",last_observed:null,docs_url:"https://www.livecoinwatch.com/tools/api"},
     {name:"MiningPoolStats",feature:"Pool information, authorized import not connected",access:"permissioned_import_required",status:"permissioned_import_required",last_observed:null,docs_url:"https://miningpoolstats.stream/bitcoinsilver"},
   ];
   return {sources:list,provider_count:list.length,
     verified_unique_coin_count:null,asset_identity_merge_active:false,fetched_at:at,
-    note:"CoinLore is a keyless on-demand live source. Other providers require separate authorization. Source counts overlap and are not a verified 22k asset index."};
+    note:"CoinLore, CoinMarketCap keyless listings and Coinbase public spot pairs are requestable (not continuously verified). CoinGecko and LiveCoinWatch need separately configured authorized keys. MiningPoolStats requires approved datasets. Provider counts overlap; no independently audited unique-asset count."};
 }
 function poolCoins(){
   const data=[
@@ -340,6 +340,136 @@ async function cmcExchangeDirectory(url){
     has_more:raw.data.length===limit,fetched_at:Math.floor(Date.now()/1000),
     note:'Provider exchange identities and tracked status only. No CMC trust score, 24h volume, safety certification, or cross-provider ID matching.'};
 }
+
+// These routes use only fixed provider URLs, bounded response sizes, and safe
+// read-only transformations. Provider IDs remain namespaced (never ticker-merged).
+async function publicProvider(url,options={},maxLength=1800000){
+  const parsed=new URL(url);
+  if(!["https://pro-api.coinmarketcap.com","https://api.coinbase.com",
+        "https://api.livecoinwatch.com"].includes(parsed.origin))
+    throw Error("Unknown market data provider");
+  const response=await fetch(parsed.toString(),{
+    method:options.method||"GET",
+    headers:{Accept:"application/json",...(options.headers||{})},
+    ...(options.body?{body:options.body}:{}),
+    redirect:"error",signal:AbortSignal.timeout(8000),
+    ...(options.method==="POST"?{}:{cf:{cacheTtl:600,cacheEverything:true}})
+  });
+  if(!response.ok)throw Error("Market provider temporarily unavailable ("+response.status+")");
+  const length=Number(response.headers.get("content-length")||0);
+  if(length>maxLength)throw Error("Provider response exceeds safe size");
+  const body=await response.text();
+  if(body.length>maxLength)throw Error("Provider response exceeds safe size");
+  return JSON.parse(body);
+}
+const cmcAsset=row=>{
+  if(!row||!Number.isInteger(row.id)||row.id<=0)return null;
+  const price=row.quote?.USD;
+  return {
+    id:"coinmarketcap:"+row.id,provider_id:String(row.id),
+    name:String(row.name||"").slice(0,140),
+    symbol:String(row.symbol||"").slice(0,30),
+    rank:Number.isInteger(row.cmc_rank)?row.cmc_rank:null,
+    price_usd:num(price?.price),market_cap_usd:num(price?.market_cap),
+    volume_24h_usd:num(price?.volume_24h),
+    circulating_supply:num(row.circulating_supply),
+    change_1h_pct:num(price?.percent_change_1h),
+    change_24h_pct:num(price?.percent_change_24h),
+    change_7d_pct:num(price?.percent_change_7d),
+    sparkline_7d:[],icon:null,
+    market_status:"provider-reported-volume",
+    network_identity:"CoinMarketCap catalog, not chain-verified"
+  };
+};
+async function cmcMarkets(url){
+  const page=clampedInt(url.searchParams.get("page"),1,1,500);
+  const limit=clampedInt(url.searchParams.get("limit"),50,25,200);
+  if(!ALLOWED_PAGES.has(limit))throw Error("Select 25, 50, 100 or 200 coins per page");
+  const start=(page-1)*limit+1,rows=[];
+  for(let i=0;i<limit;i+=100){
+    const batch=Math.min(100,limit-i);
+    const endpoint=new URL("https://pro-api.coinmarketcap.com/public-api/v3/cryptocurrency/listings/latest");
+    endpoint.searchParams.set("start",String(start+i));
+    endpoint.searchParams.set("limit",String(batch));
+    endpoint.searchParams.set("convert","USD");
+    const raw=await publicProvider(endpoint.toString());
+    if(!Array.isArray(raw?.data))throw Error("CoinMarketCap listings unavailable");
+    if(raw.status?.error_code&&raw.status.error_code!==0)throw Error("CoinMarketCap listings unavailable");
+    rows.push(...raw.data);
+    if(raw.data.length<batch)break;
+  }
+  return {
+    source:"CoinMarketCap keyless cryptocurrency listings",
+    source_url:"https://coinmarketcap.com/api/keyless/",
+    assets:rows.map(cmcAsset).filter(a=>a&&positive(a.price_usd)&&positive(a.volume_24h_usd)),
+    page,limit,provider_rows:rows.length,
+    has_more:rows.length===limit,
+    fetched_at:Math.floor(Date.now()/1000),currency:"USD",stale:false,
+    note:"CMC market observations only; zero-volume records excluded. This is not an independently verified all-coin index."
+  };
+}
+async function coinbasePairs(url){
+  const offset=clampedInt(url.searchParams.get("offset"),0,0,50000);
+  const limit=clampedInt(url.searchParams.get("limit"),100,1,100);
+  const endpoint=new URL("https://api.coinbase.com/api/v3/brokerage/market/products");
+  endpoint.searchParams.set("limit",String(limit));
+  endpoint.searchParams.set("offset",String(offset));
+  endpoint.searchParams.set("product_type","SPOT");
+  const raw=await publicProvider(endpoint.toString());
+  if(!Array.isArray(raw?.products))throw Error("Coinbase spot pairs unavailable");
+  const pairs=raw.products.filter(p=>p&&typeof p.product_id==="string"&&
+      /^[A-Z0-9]{2,20}-[A-Z0-9]{2,20}$/.test(p.product_id)&&
+      (p.product_type==="SPOT"||p.product_type===undefined)).map(p=>{
+    const base=String(p.base_currency_id||p.base_currency||"").slice(0,20);
+    const quote=String(p.quote_currency_id||p.quote_currency||"").slice(0,20);
+    return {
+      id:"coinbase:"+p.product_id,provider_id:p.product_id,
+      pair:p.product_id,base,quote,
+      price:quote==="USD"?loreNumber(p.price):null,
+      volume_24h:loreNumber(p.volume_24h),
+      volume_unit:base,
+      status:typeof p.status==="string"?p.status.slice(0,40):"Unknown",
+      trading_disabled:Boolean(p.trading_disabled||p.is_disabled)
+    };
+  });
+  return {source:"Coinbase Advanced Trade public spot products",
+    pairs,offset,limit,provider_rows:raw.products.length,
+    has_more:raw.products.length===limit,
+    fetched_at:Math.floor(Date.now()/1000),stale:false,
+    note:"Coinbase spot pairs, not unique coins. USD price displayed only for USD quote pairs; 24h volume is in BASE coin units."
+  };
+}
+const lcwEnabled=env=>Boolean(env.LIVECOINWATCH_API_KEY&&env.LCW_DISPLAY_APPROVED==="yes");
+const lcwDelta=value=>num(value)!==null&&value>0?(value-1)*100:null;
+// The provider uses POST even for reads. This route is GET to SilverScan only.
+async function livecoinwatchMarkets(url,env){
+  if(!lcwEnabled(env))throw Error("LiveCoinWatch licensed display authorization and API key required");
+  const page=clampedInt(url.searchParams.get("page"),1,1,500);
+  const limit=clampedInt(url.searchParams.get("limit"),50,25,200);
+  if(!ALLOWED_PAGES.has(limit))throw Error("Select 25, 50, 100 or 200 coins per page");
+  const raw=await publicProvider("https://api.livecoinwatch.com/coins/list",{
+    method:"POST",
+    headers:{"content-type":"application/json","x-api-key":env.LIVECOINWATCH_API_KEY},
+    body:JSON.stringify({currency:"USD",sort:"rank",order:"ascending",offset:(page-1)*limit,limit,meta:false})
+  });
+  if(!Array.isArray(raw))throw Error("LiveCoinWatch market page unavailable");
+  const assets=raw.filter(r=>r&&typeof r.code==="string"&&/^[A-Za-z0-9.-]{1,40}$/.test(r.code)).map(r=>({
+    id:"livecoinwatch:"+r.code,provider_id:r.code,
+    name:String(r.name||r.code).slice(0,140),
+    symbol:r.code.slice(0,30),rank:Number.isInteger(r.rank)?r.rank:null,
+    price_usd:num(r.rate),market_cap_usd:num(r.cap),volume_24h_usd:num(r.volume),
+    circulating_supply:num(r.circulatingSupply),
+    change_1h_pct:lcwDelta(r.delta?.hour),change_24h_pct:lcwDelta(r.delta?.day),
+    change_7d_pct:lcwDelta(r.delta?.week),
+    sparkline_7d:[],icon:null,market_status:"provider-reported-volume",
+    network_identity:"LiveCoinWatch provider code, not chain-verified"
+  })).filter(r=>positive(r.price_usd)&&positive(r.volume_24h_usd));
+  return {source:"LiveCoinWatch /coins/list",assets,page,limit,provider_rows:raw.length,
+    has_more:raw.length===limit,fetched_at:Math.floor(Date.now()/1000),currency:"USD",stale:false,
+    note:"Keyed provider observations, with percentage changes converted from LCW multipliers. Provider code does not verify a chain/contract."
+  };
+}
+
 // CG metrics are available only where the owner has activated its approved API.
 async function cgExchangeDirectory(url,env){
   const page=clampedInt(url.searchParams.get('page'),1,1,100);
@@ -369,12 +499,15 @@ export default {
     if(url.pathname.startsWith("/api/account/"))return fail("Account registration and synced portfolios are not available in public alpha.",403);
     try{
       const path=url.pathname;
-      if(path==="/api/alpha/health")return json({status:"alpha",backend:"Cloudflare Workers",live_services:["static site","CoinLore market API","alternative.me sentiment"],locked_services:["account storage","public RPC","trading","payouts"],timestamp:Date.now()});
+      if(path==="/api/alpha/health")return json({status:"alpha",backend:"Cloudflare Workers",live_services:["static site","CoinLore market API","CoinMarketCap keyless listings","Coinbase public spot pairs","alternative.me sentiment",...(cgEnabled(env)?["CoinGecko configured"]:[]),...(lcwEnabled(env)?["LiveCoinWatch configured"]:[])],locked_services:["account storage","public RPC","trading","payouts"],timestamp:Date.now()});
       if(path==="/api/sources/status")return json(sources(env));
       if(path==="/api/mining/coins")return json(poolCoins());
       if(path==="/api/exchanges/cmc"||path==="/api/exchanges/cmc-map")return json(await cmcExchangeDirectory(url));
       if(path==="/api/insights/exchanges"||path==="/api/exchanges/coingecko")return json(await cgExchangeDirectory(url,env));
       if(path==="/api/market/global")return json(cgEnabled(env)?await globalMarket(env):await loreGlobal());
+      if(path==="/api/coinmarketcap/active")return json(await cmcMarkets(url));
+      if(path==="/api/coinbase/pairs")return json(await coinbasePairs(url));
+      if(path==="/api/livecoinwatch/markets")return json(await livecoinwatchMarkets(url,env));
       if(path==="/api/coinlore/markets")return json(await loreMarkets(url));
       if(path==="/api/coinlore/quote")return json(await loreQuote(url));
       if(path==="/api/coinlore/search")return json(await loreSearch(url));
