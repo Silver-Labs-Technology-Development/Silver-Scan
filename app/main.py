@@ -78,6 +78,12 @@ class Handler(BaseHTTPRequestHandler):
         if path in ("/", "/index.html"):
             self._static("index.html", "text/html; charset=utf-8")
             return
+        if path in ("/insights.html", "/compare.html"):
+            self._static(path.lstrip("/"), "text/html; charset=utf-8")
+            return
+        if path in ("/insights.js", "/compare.js"):
+            self._static(path.lstrip("/"), "application/javascript; charset=utf-8")
+            return
         if path in ("/coin-watch.html", "/news.html", "/mining.html"):
             self._static(path.lstrip("/"), "text/html; charset=utf-8")
             return
@@ -151,6 +157,20 @@ class Handler(BaseHTTPRequestHandler):
             return
         if path == "/api/news":
             self._send(200, C.news(self._query_int(query, "limit", 20, 1, 40)))
+            return
+        if path == "/api/insights/trending":
+            self._send(200, C.cg_trending())
+            return
+        if path == "/api/insights/categories":
+            self._send(200, C.cg_categories(self._query_int(query, "limit", 30, 1, 50)))
+            return
+        if path == "/api/insights/exchanges":
+            page = self._query_int(query, "page", 1, 1, 20)
+            limit = self._query_int(query, "limit", 30, 1, 50)
+            self._send(200, C.cg_exchanges(page, limit))
+            return
+        if path == "/api/insights/defi":
+            self._send(200, C.cg_defi())
             return
         if path == "/api/mining/coins":
             self._send(200, P.public_coins())
