@@ -12,6 +12,7 @@ from contextlib import closing
 from decimal import Decimal, InvalidOperation
 import os
 import sqlite3
+import time
 from pathlib import Path
 
 from app import config, rpc
@@ -279,9 +280,30 @@ def address_balance(address, limit=50, offset=0):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description="Silver Scan bounded BTCS L1 indexer")
-    parser.add_argument("--max-blocks", type=int, default=100)
+    parser.add_argument("--max-blocks", type=int, default=100, help="Blocks per batch (1–1000)")
+    parser.add_argument("--follow", action="store_true", help="Keep syncing in bounded batches; stop with Ctrl+C")
+    parser.add_argument("--interval", type=float, default=15.0, help="Seconds to poll after reaching chain tip")
     args = parser.parse_args(argv)
-    print(sync_to_tip(args.max_blocks))
+    if not 1 <= args.max_blocks <= 1000:
+        parser.error("--max-blocks must be 1..1000")
+    if not 1 <= args.interval <= 3600:
+        parser.error("--interval must be between 1 and 3600 seconds")
+    if not args.follow:
+        print(sync_to_tip(args.max_blocks), flush=True)
+        return
+    try:
+        while True:
+            try:
+                status = sync_to_tip(args.max_blocks)
+                print(status, flush=True)
+                # Fast catch-up still releases CPU/network between batches.
+                time.sleep(args.interval if status["caught_up"] else 0.5)
+            except (rpc.RpcError, sqlite3.Error, ValueError) as exc:
+                # Do not dump RPC URLs or credentials in operator logs.
+                print("Silver Scan index catch-up error; retrying after interval", flush=True)
+                time.sleep(args.interval)
+    except KeyboardInterrupt:
+        print("Silver Scan indexer stopped", flush=True)
 
 
 if __name__ == "__main__":
