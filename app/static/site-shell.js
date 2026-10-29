@@ -36,6 +36,7 @@
         '<details class="ss-nav-dropdown" id="ss-research-dropdown">',
           '<summary class="ss-nav-item ss-nav-summary" aria-label="More research pages">More Research <span aria-hidden="true">⌄</span></summary>',
           '<div class="ss-dropdown-panel">',
+            '<a href="./exchanges.html">Exchange Directory</a>',
             '<a href="./insights.html">Market Insights</a>',
             '<a href="./compare.html">Compare Coins</a>',
             '<a href="./#heatmap">Market Heatmap</a>',
