@@ -98,7 +98,8 @@ in the **local environment**; never add credentials to tracked files.
 ```sh
 export BTCS_NETWORK=main
 export BTCS_RPC_URL=http://127.0.0.1:10567
-# Example matches Silver Pool's mainnet RPC default (10567); verify your installed node's config.\n# Provide BTCS_RPC_USER and BTCS_RPC_PASSWORD privately from your node config
+# Example matches Silver Pool's mainnet RPC default (10567); verify your installed node's config.
+# Provide BTCS_RPC_USER and BTCS_RPC_PASSWORD privately from your node config
 export SILVERSCAN_DB="$PWD/silverscan.db"
 python3 -m app.indexer --max-blocks 100
 # Re-run until caught up, or explicitly start the continuous operator CLI:
