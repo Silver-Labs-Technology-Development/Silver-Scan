@@ -92,6 +92,37 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/api/markets":
             self._send(200, M.markets(self._query_int(query, "limit", 50, 1, 100)))
             return
+        if path == "/api/market/global":
+            self._send(200, M.global_market())
+            return
+        if path == "/api/assets/profile":
+            self._send(200, M.asset_profile((query.get("id") or [""])[0]))
+            return
+        if path == "/api/assets/chart":
+            days = self._query_int(query, "days", 7, 1, 365)
+            self._send(200, M.asset_chart((query.get("id") or [""])[0], days))
+            return
+        if path == "/api/mining/overview":
+            self._btcs(query)
+            chain = A.btcs_health()
+            mining = A.rpc.call(
+                config.BTCS_RPC_URL, config.BTCS_RPC_USER, config.BTCS_RPC_PASSWORD,
+                "getmininginfo", [],
+            )
+            if not isinstance(mining, dict):
+                raise ValueError("BTCS Core returned invalid mining information")
+            self._send(200, {
+                "source": "BTCS Core node RPC",
+                "network": chain.get("chain"),
+                "height": chain.get("blocks"),
+                "difficulty": mining.get("difficulty"),
+                "network_hashrate_hps": mining.get("networkhashps"),
+                "pooled_transactions": mining.get("pooledtx"),
+                "chain_synced_progress": chain.get("verificationProgress"),
+                "note": "Network-level node information. Not a live pool directory or Silver Pool hashrate.",
+                "pool_directory_url": "https://miningpoolstats.stream/bitcoinsilver",
+            })
+            return
         if path == "/api/dex/search":
             self._send(200, M.dex_search((query.get("q") or [""])[0]))
             return
