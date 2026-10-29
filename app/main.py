@@ -17,6 +17,7 @@ from app import config
 from app import indexer as I
 from app import market_data as M
 from app import coverage as C
+from app import pool_registry as P
 
 STATIC = Path(__file__).resolve().parent / "static"
 HEX_HASH = re.compile(r"^[0-9a-fA-F]{64}$")
@@ -76,6 +77,15 @@ class Handler(BaseHTTPRequestHandler):
     def _route(self, path, query):
         if path in ("/", "/index.html"):
             self._static("index.html", "text/html; charset=utf-8")
+            return
+        if path in ("/coin-watch.html", "/news.html", "/mining.html"):
+            self._static(path.lstrip("/"), "text/html; charset=utf-8")
+            return
+        if path == "/theme.css":
+            self._static("theme.css", "text/css; charset=utf-8")
+            return
+        if path == "/theme.js":
+            self._static("theme.js", "application/javascript; charset=utf-8")
             return
         if path == "/data-hub.html":
             self._static("data-hub.html", "text/html; charset=utf-8")
@@ -138,6 +148,13 @@ class Handler(BaseHTTPRequestHandler):
             return
         if path == "/api/news":
             self._send(200, C.news(self._query_int(query, "limit", 20, 1, 40)))
+            return
+        if path == "/api/mining/coins":
+            self._send(200, P.public_coins())
+            return
+        if path == "/api/coin-watch/quotes":
+            ids = (query.get("ids") or [""])[0].split(",")
+            self._send(200, C.cg_market_by_ids(ids))
             return
         if path == "/api/mining/estimate":
             names = ("miner_hashrate_hps","network_hashrate_hps","block_reward",
