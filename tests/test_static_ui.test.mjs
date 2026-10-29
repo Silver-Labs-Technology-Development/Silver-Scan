@@ -7,8 +7,8 @@ const css = readFileSync('app/static/styles.css', 'utf8')
 const explorer = readFileSync('app/static/explorer.js', 'utf8')
 const research = readFileSync('app/static/research.js', 'utf8')
 
-test('Silver Scan includes four real research/explorer views', () => {
-  for (const tab of ['explorer','markets','watch','dex','mining','heatmap']) {
+test('SilverScan has distinct in-depth market, watch, news and mining destinations', () => {
+  for (const tab of ['explorer','markets','dex','heatmap']) {
     assert.match(page, new RegExp('data-tab="' + tab + '"'))
   }
   for (const id of ['explorer-search','view','research-view','net']) {
@@ -17,6 +17,9 @@ test('Silver Scan includes four real research/explorer views', () => {
   assert.match(page, /Silver Labs/i)
   assert.match(page, /not SilvEx trades/i)
   assert.match(page, /href="\.\/features\.html"/)
+  assert.match(page, /href="\.\/coin-watch\.html"/)
+  assert.match(page, /href="\.\/news\.html"/)
+  assert.match(page, /href="\.\/mining\.html"/)
 })
 
 test('research modules are external; untrusted block fields never become HTML templates', () => {
@@ -34,7 +37,7 @@ test('responsive and accessible visual foundation', () => {
   assert.match(page, /<html lang="en">/)
   assert.match(page, /name="viewport"/)
   assert.match(page, /class="skip-link"/)
-  assert.match(page, /aria-label="Silver Scan sections"/)
+  assert.match(page, /aria-label="SilverScan sections"/)
   assert.match(page, /aria-live="polite"/)
   assert.match(css, /@media\(max-width:700px\)/)
   assert.match(css, /@media\(prefers-reduced-motion:reduce\)/)
@@ -54,31 +57,59 @@ test('query controls use encoded parameters and no authorization or signing flow
 })
 
 
-test('Coin Universe shows source-backed multi-provider discovery, publisher news and mining models', () => {
-  const hub = readFileSync('app/static/data-hub.html', 'utf8')
-  const script = readFileSync('app/static/data-hub.js', 'utf8')
-  const styles = readFileSync('app/static/data-hub.css', 'utf8')
-  assert.match(page, /href="\.\/data-hub\.html#universe"/)
-  assert.match(page, /href="\.\/data-hub\.html#news"/)
-  assert.match(hub, /bitcoin-silver-2/)
-  assert.match(hub, /CoinGecko active-market pages/)
-  assert.match(hub, /CoinMarketCap active listings/)
-  assert.match(hub, /Coinbase available spot pairs/)
-  assert.match(hub, /Latest Crypto News/)
-  assert.match(hub, /Mining Estimate Laboratory/)
-  assert.match(script, /\/api\/asset\/quote\?id=bitcoin-silver-2/)
-  for (const api of [
-    '/api/catalog/search', '/api/catalog/page', '/api/coinmarketcap/active',
-    '/api/coinbase/pairs', '/api/news', '/api/mining/estimate'
-  ]) assert.ok(script.includes(api), 'Missing API: '+api)
-  assert.match(script, /textContent/)
-  assert.doesNotMatch(script, /innerHTML\s*=/)
-  assert.match(styles, /@media\(max-width:790px\)/)
-  assert.match(styles, /#0c182b/)
-})
 
-test('Silver Scan shared palette uses navy and ice blue, not a white-gold-only system',()=>{
-  assert.match(css, /--bg:#0b182b/)
-  assert.match(css, /--brand:#90d4ff/)
-  assert.match(research, /localStorage\.getItem\(THEME_KEY\)\|\|'dark'/)
+test('Coin Watch combines catalog discovery with saved coins, separate news and mining pages',()=>{
+  const watch=readFileSync('app/static/coin-watch.html','utf8');
+  const news=readFileSync('app/static/news.html','utf8');
+  const mining=readFileSync('app/static/mining.html','utf8');
+  const script=readFileSync('app/static/data-hub.js','utf8');
+  for(const html of [watch,news,mining]){
+    assert.match(html,/src="\.\/data-hub\.js"/);
+    assert.match(html,/href="\.\/theme\.css"/);
+    assert.match(html,/id="theme-toggle"/);
+    assert.match(html,/SILVER<span>SCAN/);
+    assert.match(html,/href="\.\/news\.html"/);
+    assert.match(html,/href="\.\/mining\.html"/);
+    assert.match(html,/href="\.\/coin-watch\.html"/);
+  }
+  assert.match(watch,/id="watch-results"/);
+  assert.match(watch,/id="asset-search"/);
+  assert.match(watch,/bitcoin-silver-2/);
+  assert.match(watch,/CoinMarketCap active listings/);
+  assert.match(watch,/Coinbase available spot pairs/);
+  assert.match(news,/Latest Crypto News/);
+  assert.doesNotMatch(news,/id="asset-search"/);
+  assert.match(mining,/id="mining-network-results"/);
+  assert.match(mining,/id="mining-form"/);
+  assert.doesNotMatch(mining,/id="asset-search"/);
+  assert.match(script,/localStorage\.setItem\(WATCH_KEY/);
+  assert.match(script,/\/api\/coin-watch\/quotes/);
+  assert.match(script,/\/api\/mining\/coins/);
+  assert.match(script,/\/api\/news/);
+  assert.match(script,/\/api\/mining\/estimate/);
+  assert.doesNotMatch(script,/innerHTML\s*=/);
+});
+
+test('main market pages offer provider pagination with 25–200 coins per page',()=>{
+  assert.match(research,/marketPageSize:50/);
+  assert.match(research,/\[25,50,100,200\]/);
+  assert.match(research,/\/api\/catalog\/page\?page=/);
+  assert.match(research,/marketHasMore/);
+  assert.match(research,/Previous/);
+  assert.match(research,/Next/);
+  assert.doesNotMatch(research,/Provider-ranked top 100 snapshot/);
+  assert.match(research,/location.href='\.\/coin-watch\.html\?search='/);
+});
+
+test('shared CSS exposes distinct readable dark and light panels',()=>{
+  const theme=readFileSync('app/static/theme.css','utf8');
+  const themeJS=readFileSync('app/static/theme.js','utf8');
+  assert.match(theme,/html\[data-theme=dark\]/);
+  assert.match(theme,/html\[data-theme=light\]/);
+  assert.match(theme,/--panel:#1b344b/);
+  assert.match(theme,/--panel:#ffffff/);
+  assert.match(theme,/--text:#f1f7ff/);
+  assert.match(theme,/--text:#153149/);
+  assert.match(themeJS,/localStorage\.getItem\(KEY\)/);
+  assert.match(theme,/opacity:1/);
 });
