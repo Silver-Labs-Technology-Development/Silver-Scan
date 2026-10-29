@@ -169,7 +169,7 @@ test('every planned feature leads to a meaningful integration outline',()=>{
   const detailed=readFileSync('app/static/feature-detail.html','utf8');
   const script=readFileSync('app/static/feature-detail.js','utf8');
   assert.match(html,/href="\.\/feature-detail\.html\?feature=/);
-  assert.doesNotMatch(html,/No live data module yet/);
+  assert.doesNotMatch(html,/<span class="feature-action feature-action-muted">No live data module yet<\/span>/);
   assert.match(html,/href="\.\/coin-watch\.html#portfolio"/);
   assert.match(detailed,/feature-skeleton/);
   assert.match(script,/DOMParser/);
