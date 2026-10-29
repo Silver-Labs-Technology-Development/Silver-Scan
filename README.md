@@ -49,6 +49,26 @@ discovery and blockchain/token explorer navigation while remaining an original
 Silver Labs interface. This branch does not copy other sites' proprietary
 visuals or claim to have their full data coverage.
 
+## Multi-source Coin Universe, news and mining tools
+
+The new [Coin Universe and News workspace](app/static/data-hub.html) is served
+at `/data-hub.html`. It supplements the top-market dashboard with the
+CoinGecko full-ID catalog search (including low-ranked
+`bitcoin-silver-2`), paginated CoinGecko and CoinMarketCap active-market
+listings, public Coinbase spot-pair lookups, publisher-attributed crypto-news
+headlines and a user-input mining estimate calculator.
+
+The server-side integration contracts live in [`app/coverage.py`](app/coverage.py).
+[Provider documentation and commercial rights](docs/DATA-SOURCES.md) explain
+which data is available, what needs credentials, which data requires
+commercial licensing, and why broad catalog IDs are **not** a claim that
+Silver Scan currently indexes 22,000+ actively traded/verified assets.
+
+The main UI, heatmap, explorer, feature map and new data hub use a navy,
+silver and light-blue theme. The static frontend alone does not provide
+API values; the Python backend needs live provider access and the BTCS
+node is required for BTCS L1 explorer/network mining data.
+
 ## Run locally
 
 The frontend and Python API are served together, on a loopback-only
@@ -105,12 +125,13 @@ configure or certify a production backend.
 Tests:
 
 ```sh
-python3 -m pytest -q tests/test_market_data.py tests/test_indexer_canonical.py tests/test_http_api.py
+python3 -m pytest -q tests/test_market_data.py tests/test_indexer_canonical.py tests/test_http_api.py tests/test_coverage.py
 node --test tests/test_static_ui.test.mjs
 node --check app/static/explorer.js
 node --check app/static/research.js
 node --check app/static/charts.js
 node --check app/static/features.js
+node --check app/static/data-hub.js
 python3 -m compileall -q app tests
 ```
 
