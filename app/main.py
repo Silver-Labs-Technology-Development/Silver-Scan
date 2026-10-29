@@ -137,6 +137,12 @@ class Handler(BaseHTTPRequestHandler):
         if path in ("/", "/index.html"):
             self._static("index.html", "text/html; charset=utf-8")
             return
+        if path == "/exchanges.html":
+            self._static("exchanges.html", "text/html; charset=utf-8")
+            return
+        if path == "/exchanges.js":
+            self._static("exchanges.js", "application/javascript; charset=utf-8")
+            return
         if path == "/universal-explorer.html":
             self._static("universal-explorer.html", "text/html; charset=utf-8")
             return
