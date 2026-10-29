@@ -396,6 +396,9 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         path = urlsplit(self.path).path
+        if path == "/api/index/sync":
+            self._error(405, "Index writes are disabled over HTTP; use the local CLI")
+            return
         if path not in ("/api/account/register", "/api/account/login",
                         "/api/account/logout", "/api/account/portfolio"):
             self._error(405, "This operation is not available")
