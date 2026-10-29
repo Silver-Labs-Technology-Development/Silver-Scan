@@ -61,8 +61,19 @@
         <h1 id="page-title">Cryptocurrency Prices by Market Cap</h1>
         <p id="page-description" class="muted">Research markets and blockchain activity across multiple providers. <a href="./coin-watch.html">Explore low-ranked coins and tokens, including BTCS →</a></p>
       </div>
-      <div class="intro-side"><span class="tiny-label">DATA AVAILABILITY</span><strong id="data-state">Connecting to providers</strong><small id="last-updated">Updated: —</small></div>
+      <div class="intro-side"><span class="tiny-label">SELECTED MARKET FEED</span><strong id="data-state">Connecting to providers</strong><small id="last-updated">Updated: —</small></div>
     </div>
+    <section class="provider-board" aria-labelledby="providers-heading">
+      <div class="provider-board-head">
+        <div><h2 id="providers-heading">Market Data Sources</h2>
+          <p>Five independent feeds in one workspace. Activity is measured per provider; coverage counts are not added together or treated as verified unique coins.</p></div>
+        <button id="refresh-sources" type="button" class="provider-refresh">Refresh connection status</button>
+      </div>
+      <div id="sources-status" class="provider-grid" aria-live="polite">
+        <p class="hub-note">Checking backend source configuration and recent observations…</p>
+      </div>
+      <p class="provider-disclaimer">CoinGecko supplies this page's global market totals and visual charts. CoinMarketCap and LiveCoinWatch can supply separate market rankings; Coinbase supplies trading pairs; MiningPoolStats supplies pool information only when an authorized dataset is connected. <a href="./coin-watch.html">Explore other assets in Coin Watch →</a></p>
+    </section>
     <section id="market-overview" class="market-overview" aria-label="Global market statistics">
       <div class="metric-card">
         <span class="metric-label">Global Market Cap</span>
