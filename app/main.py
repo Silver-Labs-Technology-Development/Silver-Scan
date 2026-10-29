@@ -4,6 +4,7 @@ from urllib.parse import urlparse, parse_qs
 from app.config import HOST, PORT
 from app import adapters as A
 from app import indexer as I
+from app import market_data as M
 I.init_db()
 
 class Handler(BaseHTTPRequestHandler):
@@ -25,6 +26,25 @@ class Handler(BaseHTTPRequestHandler):
                     self._send(200, f.read(), "text/html"); return
             if path == "/api/networks":
                 self._send(200, json.dumps([n.to_dict() for n in A.NETWORKS])); return
+            if path == "/api/markets":
+                try:
+                    limit = int((qs.get("limit") or ["50"])[0])
+                    result = M.markets(limit)
+                    self._send(200, json.dumps(result))
+                except ValueError as exc:
+                    self._send(400, json.dumps({"error": str(exc)}))
+                except M.ProviderUnavailable:
+                    self._send(503, json.dumps({"error": "Market data temporarily unavailable", "source": "CoinGecko"}))
+                return
+            if path == "/api/dex/search":
+                try:
+                    result = M.dex_search((qs.get("q") or [""])[0])
+                    self._send(200, json.dumps(result))
+                except ValueError as exc:
+                    self._send(400, json.dumps({"error": str(exc)}))
+                except M.ProviderUnavailable:
+                    self._send(503, json.dumps({"error": "DEX data temporarily unavailable", "source": "DEX Screener"}))
+                return
             if path == "/api/health":
                 net = (qs.get("network") or ["btcs-regtest"])[0]
                 if net.startswith("btcs"):
