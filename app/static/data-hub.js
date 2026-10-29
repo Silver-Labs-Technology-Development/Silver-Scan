@@ -252,7 +252,9 @@ if($('search-coins')&&initialQuery&&initialQuery.trim().length>=2&&initialQuery.
   $('search-coins').value=initialQuery.trim();
   loadUniverse({search:initialQuery.trim()});
 }
-if($('btcs-fetch'))$('btcs-fetch').click();
+// Show real active market rows immediately; the low-volume BTCS quote is an
+// optional explicit action, not a failing automatic CoinGecko request.
+if($('universe-results')&&!initialQuery)loadUniverse();
 if($('mining-network-results'))loadMiningNetworks();
 $('refresh-mining')?.addEventListener('click',loadMiningNetworks);
 
