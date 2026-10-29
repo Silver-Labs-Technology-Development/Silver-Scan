@@ -110,7 +110,7 @@ def markets(limit: int = 50):
             "change_24h_pct": _number(row.get("price_change_percentage_24h_in_currency") if row.get("price_change_percentage_24h_in_currency") is not None else row.get("price_change_percentage_24h")),
             "change_7d_pct": _number(row.get("price_change_percentage_7d_in_currency")),
             "icon": _coin_image(row.get("image")),
-            "sparkline_7d": _sparkline(row.get("sparkline_in_7d")),,
+            "sparkline_7d": _sparkline(row.get("sparkline_in_7d")),
             "market_cap_usd": _number(row.get("market_cap")),
             "volume_24h_usd": _number(row.get("total_volume")),
             "circulating_supply": _number(row.get("circulating_supply")),
