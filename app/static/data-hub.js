@@ -49,7 +49,8 @@ function assetTable(rows,kind){
     const tr=el('tr');
     if(kind==='pairs'){
       addCell(tr,data.pair||'—');addCell(tr,(data.base||'?')+'/'+(data.quote||'?'));
-      addCell(tr,usd(data.price));addCell(tr,compact(data.volume_24h));
+      addCell(tr,usd(data.price));addCell(tr,typeof data.volume_24h==='number'?
+        compact(data.volume_24h)+' '+(data.volume_unit||data.base||'base units'):'—');
       addCell(tr,data.status||'Unknown');
     }else{
       const name=el('strong',data.name||data.provider_id||'—');

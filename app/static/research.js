@@ -102,7 +102,8 @@ async function loadSources(){
       return row;
     }));
     const count=sources.filter(x=>x.status==='observed_recently').length;
-    setText('ss-source-count',sources.length+' sources · '+count+' recently observed');
+    const ready=sources.filter(x=>x.status==='requestable').length;
+    setText('ss-source-count',sources.length+' sources · '+ready+' routes ready · '+count+' live observations');
     if(!sources.length)slot.append(el('p','No provider information available.','ss-source-empty'));
   }catch(error){
     slot.replaceChildren(el('p','Provider status unavailable.','ss-source-empty'));

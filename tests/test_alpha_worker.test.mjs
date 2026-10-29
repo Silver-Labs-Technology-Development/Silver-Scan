@@ -204,3 +204,106 @@ test('CoinGecko exchange metrics remain optional with provider permission',async
     assert.equal(data.exchanges[0].trade_volume_24h_btc,12.5);
   } finally {globalThis.fetch=original}
 });
+
+
+test('CMC keyless cryptocurrency listings provide correctly namespaced USD market rows',async()=>{
+  const original=globalThis.fetch;
+  globalThis.fetch=async (uri)=>{
+    const url=new URL(String(uri));
+    assert.equal(url.origin,'https://pro-api.coinmarketcap.com');
+    assert.equal(url.pathname,'/public-api/v3/cryptocurrency/listings/latest');
+    assert.equal(url.searchParams.get('convert'),'USD');
+    assert.equal(url.searchParams.get('start'),'26');
+    assert.equal(url.searchParams.get('limit'),'25');
+    return new Response(JSON.stringify({status:{error_code:0},data:[
+      {id:123,cmc_rank:26,name:'Example Chain',symbol:'EX',
+       circulating_supply:3000,quote:{USD:{price:0.52,volume_24h:400,market_cap:100000,percent_change_24h:-4}}},
+      {id:124,cmc_rank:27,name:'No liquidity',symbol:'NL',
+       quote:{USD:{price:1,volume_24h:0}}}
+    ]}),{status:200});
+  };
+  try{
+    const response=await worker.fetch(req('/api/coinmarketcap/active?page=2&limit=25'),env);
+    assert.equal(response.status,200);
+    const data=await parsed(response);
+    assert.equal(data.source,'CoinMarketCap keyless cryptocurrency listings');
+    assert.equal(data.assets.length,1);
+    assert.equal(data.assets[0].id,'coinmarketcap:123');
+    assert.equal(data.assets[0].price_usd,0.52);
+    assert.equal(data.assets[0].change_24h_pct,-4);
+    assert.equal(data.has_more,false);
+    assert.equal(data.verified_unique_coin_count,undefined);
+  }finally{globalThis.fetch=original;}
+});
+
+test('Coinbase public spot pairs are read-only and keep base-denominated volume separate',async()=>{
+  const original=globalThis.fetch;
+  globalThis.fetch=async uri=>{
+    const url=new URL(String(uri));
+    assert.equal(url.origin,'https://api.coinbase.com');
+    assert.equal(url.pathname,'/api/v3/brokerage/market/products');
+    assert.equal(url.searchParams.get('product_type'),'SPOT');
+    return new Response(JSON.stringify({products:[
+      {product_id:'BTC-USD',base_currency_id:'BTC',quote_currency_id:'USD',
+       price:'65000',volume_24h:'10.5',status:'online',product_type:'SPOT'},
+      {product_id:'ETH-EUR',base_currency_id:'ETH',quote_currency_id:'EUR',
+       price:'2500',volume_24h:'15',status:'online',product_type:'SPOT'},
+      {product_id:'TEST-USD',product_type:'FUTURE'}
+    ]}),{status:200});
+  };
+  try{
+    const response=await worker.fetch(req('/api/coinbase/pairs?offset=0&limit=25'),env);
+    assert.equal(response.status,200);
+    const data=await parsed(response);
+    assert.equal(data.pairs.length,2);
+    assert.equal(data.pairs[0].id,'coinbase:BTC-USD');
+    assert.equal(data.pairs[0].price,65000);
+    assert.equal(data.pairs[0].volume_24h,10.5);
+    assert.equal(data.pairs[0].volume_unit,'BTC');
+    assert.equal(data.pairs[1].price,null);
+    assert.match(data.note,/BASE/);
+  }finally{globalThis.fetch=original;}
+});
+
+test('LiveCoinWatch requires server-side key and display permission, never exposes secret',async()=>{
+  assert.equal((await worker.fetch(req('/api/livecoinwatch/markets'),env)).status,503);
+  assert.equal((await worker.fetch(req('/api/livecoinwatch/markets'),{
+    ...env,LIVECOINWATCH_API_KEY:'PRIVATE-LCW'})).status,503);
+  const original=globalThis.fetch;
+  globalThis.fetch=async (uri,opts)=>{
+    assert.equal(String(uri),'https://api.livecoinwatch.com/coins/list');
+    assert.equal(opts.method,'POST');
+    assert.equal(opts.headers['x-api-key'],'PRIVATE-LCW');
+    assert.equal(JSON.parse(opts.body).offset,25);
+    return new Response(JSON.stringify([
+      {code:'BTC',name:'Bitcoin',rank:1,rate:100,volume:1000,cap:10000,
+       circulatingSupply:500,delta:{hour:1.01,day:1.03,week:0.9}},
+      {code:'NO',rate:10,volume:0}
+    ]),{status:200});
+  };
+  try{
+    const response=await worker.fetch(req('/api/livecoinwatch/markets?page=2&limit=25'),
+      {...env,LIVECOINWATCH_API_KEY:'PRIVATE-LCW',LCW_DISPLAY_APPROVED:'yes'});
+    assert.equal(response.status,200);
+    const data=await parsed(response);
+    assert.equal(data.assets.length,1);
+    assert.equal(data.assets[0].id,'livecoinwatch:BTC');
+    assert.ok(Math.abs(data.assets[0].change_24h_pct-3)<0.0001);
+    assert.ok(!JSON.stringify(data).includes('PRIVATE-LCW'));
+  }finally{globalThis.fetch=original;}
+});
+
+test('source status reflects implemented public routes but not unverified connectivity',async()=>{
+  const base=await parsed(await worker.fetch(req('/api/sources/status'),env));
+  assert.equal(base.sources[2].status,'requestable');
+  assert.equal(base.sources[3].status,'requestable');
+  assert.equal(base.sources[4].status,'api_key_required');
+  assert.equal(base.sources[5].status,'permissioned_import_required');
+  assert.ok(base.sources.every(row=>row.last_observed===null));
+  const keyed=await parsed(await worker.fetch(req('/api/sources/status'),{
+    ...env,LIVECOINWATCH_API_KEY:'SECRET',LCW_DISPLAY_APPROVED:'yes'}));
+  assert.equal(keyed.sources[4].status,'requestable');
+  assert.ok(!JSON.stringify(keyed).includes('SECRET'));
+  assert.equal((await worker.fetch(req('/api/coinmarketcap/active?page=0'),env)).status,400);
+  assert.equal((await worker.fetch(req('/api/coinbase/pairs?limit=101'),env)).status,400);
+});
