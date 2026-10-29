@@ -1,0 +1,90 @@
+/* SilverScan v2 contrast-checked theme tokens. Loaded after component CSS.
+   Avoid translucent content panels and maintain readable text in both modes. */
+html[data-theme=dark],:root:not([data-theme=light]){
+  --bg:#0e1e31;--panel:#1b344b;--panel-alt:#264259;
+  --text:#f1f7ff;--muted:#c4d5e5;--line:#527089;
+  --brand:#a2dcff;--brand-lite:#264a66;--accent:#a2dcff;
+  --gold:#a2dcff;--green:#8ee9c9;--red:#ffb0b5;
+  --shadow:0 10px 26px #06122040;
+  color-scheme:dark;
+}
+html[data-theme=light]{
+  --bg:#eaf3fb;--panel:#ffffff;--panel-alt:#e8f3fb;
+  --text:#153149;--muted:#4b657a;--line:#aac4d8;
+  --brand:#115b92;--brand-lite:#d9edfc;--accent:#115b92;
+  --gold:#115b92;--green:#126b4a;--red:#a82e45;
+  --shadow:0 9px 25px #103e5b1d;
+  color-scheme:light;
+}
+body{background:var(--bg);color:var(--text)}
+a{color:var(--brand)}
+button,select,input,textarea{color:var(--text)}
+:focus-visible{outline:3px solid var(--brand);outline-offset:3px}
+.site-header,.utility-bar,.nav-wrap{background:var(--panel);border-color:var(--line)}
+html[data-theme=light] .hub-header-note{color:var(--muted)}
+html[data-theme=light] .hub-home{color:var(--brand)}
+.brand,.brand-type strong,.brand-type small{color:var(--text)}
+.research-nav button,.research-nav a,.feature-link-nav{color:var(--muted)}
+.research-nav button.selected,.research-nav a[aria-current=page]{color:var(--brand);border-color:var(--brand)}
+.global-search,.explorer-search input,.hub-input input,.hub-select select,.hub-field input,.hub-panel,
+.hub-main-panel,.hub-side,.hub-calc,.hub-calc-output,.hub-story,.hub-source-cards article,
+.hub-quote-grid>div,.feature-count,.feature-card,.metric-card,.panel{
+  background:var(--panel)!important;border-color:var(--line)!important;color:var(--text)!important;
+}
+.hub-calc .hub-field input,.hub-select select,.hub-input input,.global-search input{
+  background:var(--panel-alt)!important;color:var(--text)!important;border-color:var(--line)!important;
+}
+.hub-table th,.hub-table td{border-bottom-color:var(--line);color:var(--text)}
+.hub-table th,.hub-meta,.hub-note,.hub-news-source,.hub-story small,
+.hub-panel-head span,.hub-mining-status,.hub-asset-cell small,
+.hub-calc-output>p,.hub-form-action p,.hub-source-cards article p,
+.hub-featured .hub-note,.hub-quote-grid small{color:var(--muted)}
+.hub-news-title,.hub-story .hub-news-title,.hub-source-cards h3,.hub-panel-head h3,
+.hub-side h3,.hub-calc-output h3,.hub-quote-grid strong,
+.hub-quote-grid>div strong{color:var(--text)}
+.hub-featured,.hub-hero,.scan-hub-promo,.hub-end{
+  background:linear-gradient(125deg,#153552,#22567c)!important;color:#f3faff!important;border-color:#5c94bd!important;
+}
+.hub-featured p,.hub-hero p,.hub-end p,.hub-featured h2,.hub-hero h1,.hub-end strong{color:#f3faff!important}
+.hub-featured .eyebrow,.hub-hero .eyebrow{color:#a9e2ff!important}
+.hub-featured button,.hub-actions button,.hub-head>button,.hub-input button,
+.hub-form-action button,.global-search button,.scan-hub-promo a{
+  background:#a6e0ff!important;color:#102a43!important;border-color:#a6e0ff!important;
+}
+.hub-featured button:hover,.hub-actions button:hover,.hub-head>button:hover,
+.hub-input button:hover,.hub-form-action button:hover{background:#d1f0ff!important}
+.hub-tabbar a,.feature-jump a,.hub-chip{background:var(--panel);color:var(--text);border-color:var(--line)}
+.hub-tabbar a:hover,.feature-jump a:hover{color:var(--brand);border-color:var(--brand)}
+.hub-featured #btcs-result .hub-quote-grid>div{background:#102c47!important;border-color:#5489ae!important}
+.hub-featured #btcs-result .hub-quote-grid small{color:#c7e0f3}
+.hub-featured #btcs-result .hub-quote-grid strong{color:#f3faff}
+.hub-error{background:#462b35;color:#ffe1e2;border-left:3px solid #ffb0b5}
+.hub-watch-star,.hub-estimate-link,#reload-watch,#refresh-mining,.hub-asset-action{
+  background:var(--brand-lite);color:var(--brand);border:1px solid var(--line);border-radius:8px;
+  padding:8px 11px;font-weight:800;cursor:pointer;
+}
+.hub-watch-star{font-size:17px;line-height:1.1}
+.hub-missing{margin-top:18px;border-top:1px solid var(--line);padding-top:16px}
+.hub-missing h3{font-size:14px}.hub-missing-row{display:flex;gap:15px;justify-content:space-between;align-items:center;margin:5px 0}
+.hub-missing-row code{overflow-wrap:anywhere}
+.hub-node-stats{margin-bottom:16px;padding:17px;border:1px solid var(--line);background:var(--panel-alt);border-radius:11px}
+.hub-node-stats h3{margin:0 0 6px;color:var(--text)}
+.hub-source-cards{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+.hub-source-cards .mining-coin h3{font-size:18px}
+.hub-source-cards .mining-coin .hub-mining-status{font-weight:750}
+.hub-source-cards .mining-coin a{display:inline-block;margin-bottom:12px}
+.hub-source-cards .mining-coin button{display:block;margin-top:auto}
+#watch-results{min-height:90px}
+.hub-story .hub-news-title:hover{color:var(--brand)}
+html[data-theme=light] .hub-hero,.hub-featured,.hub-end{color:#fff}
+html[data-theme=light] .hub-hero h1,html[data-theme=light] .hub-hero p{color:#fff}
+html[data-theme=light] .hub-featured code{color:#e4f4ff}
+html[data-theme=light] .hub-status{background:#11314c;border-color:#5c91b7;color:#effaff}
+html[data-theme=light] .hub-status strong,html[data-theme=light] .hub-status span,html[data-theme=light] .hub-status small{color:#eaf6ff}
+html[data-theme=light] .hub-footer,html[data-theme=light] .site-footer{background:#13324a;color:#eaf5ff}
+html[data-theme=light] .site-footer a,html[data-theme=light] .site-footer p,html[data-theme=light] .site-footer strong{color:#eaf5ff}
+html[data-theme=dark] .site-footer{background:#0b1b2d}
+html[data-theme=dark] .site-footer a,html[data-theme=dark] .site-footer strong{color:#dbefff}
+.theme-toggle{min-width:42px;min-height:40px;background:var(--panel-alt);color:var(--text);border:1px solid var(--line)}
+/* No low-contrast opacity on critical informational statuses. */
+.hub-mining-status,.hub-meta,.feature-status,.hub-note{opacity:1}
