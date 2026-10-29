@@ -1,106 +1,56 @@
 <!doctype html>
-<html lang="en">
-<head><script src="./site-shell.js" defer></script>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#0e1e31">
-  <meta name="description" content="SilverScan: cryptocurrency prices, real market charts, coin research, Bitcoin Silver mining data and blockchain exploration.">
-  <title>SilverScan | Crypto Markets, Mining & Blockchain Explorer</title>
-  <link rel="stylesheet" href="./styles.css">
-  <script type="module" src="./explorer.js"></script>
-  <script type="module" src="./research.js"></script>
-<link rel="stylesheet" href="./theme.css"><script src="./alpha.js" defer></script><link rel="stylesheet" href="./site-shell.css"></head>
-<body>
-  <a class="skip-link" href="#research-view">Skip to main content</a>
-  <div class="utility-bar">
-    <div class="shell utility-inner">
-      <div class="utility-stats" aria-label="Crypto market totals">
-        <span>Cryptocurrencies <strong id="market-coins">—</strong></span>
-        <span>Market Cap <strong id="market-cap-top">—</strong></span>
-        <span>24h Volume <strong id="market-volume-top">—</strong></span>
-        <span>BTC Dominance <strong id="market-btc-top">—</strong></span>
-      </div>
-      <span class="utility-source" id="market-source-top">Data: CoinGecko · loading</span>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0e1e31">
+<meta name="description" content="SilverScan by Silver Labs: explore crypto markets, assets, proof-of-work mining pools, blockchain networks, exchange data and news in one research workspace.">
+<title>SilverScan — One Workspace for Blockchain Research</title>
+<link rel="stylesheet" href="./styles.css"><link rel="stylesheet" href="./theme.css">
+<link rel="stylesheet" href="./site-shell.css"><link rel="stylesheet" href="./landing.css">
+<script src="./site-shell.js" defer></script><script src="./theme.js" defer></script>
+<script src="./alpha.js" defer></script><script src="./landing.js" defer></script>
+</head><body>
+<a class="skip-link" href="#content">Skip to homepage</a>
+<header class="site-header" role="banner"></header>
+<main id="content">
+<section class="scan-landing-hero"><div class="shell scan-landing-layout">
+  <div class="scan-landing-intro">
+    <div class="scan-landing-eyebrow"><span class="scan-live-dot" aria-hidden="true"></span> SILVERSCAN / SILVER LABS RESEARCH</div>
+    <h1>One workspace.<br><span>More of the blockchain.</span></h1>
+    <p>Follow cryptocurrency markets, examine blockchain data, research mining pools, and compare exchange information without switching between disconnected tools.</p>
+    <div class="scan-landing-actions">
+      <a class="scan-cta-primary" href="./markets.html">Explore live markets <span aria-hidden="true">↗</span></a>
+      <a class="scan-cta-secondary" href="./universal-explorer.html">Explore networks <span aria-hidden="true">→</span></a>
     </div>
+    <div class="scan-landing-qualifier">Independent research · Provider-attributed observations · Public alpha</div>
   </div>
-  <header class="site-header" role="banner"></header>
-  <div class="shell workspace">
-    <div class="page-intro" id="page-intro">
-      <div>
-        <div class="section-kicker"><span class="status-indicator"></span> SILVERSCAN / RESEARCH CENTER</div>
-        <h1 id="page-title">Cryptocurrency Prices by Market Cap</h1>
-        <p id="page-description" class="muted">Research markets and blockchain activity across multiple providers. <a href="./coin-watch.html">Explore low-ranked coins and tokens, including BTCS →</a></p>
-      </div>
-      <aside class="intro-side ss-source-aside">
-      <span class="tiny-label">MARKET FEED</span>
-      <strong id="data-state">Checking market data</strong>
-      <small id="last-updated">Updated: —</small>
-      <details class="ss-source-details" id="ss-source-details">
-        <summary aria-label="Show data source status"><span class="ss-source-dot" aria-hidden="true"></span><span id="ss-source-count">5 data sources</span><span aria-hidden="true">⌄</span></summary>
-        <div class="ss-sources-popover">
-          <div class="ss-sources-top">
-            <strong>Data sources</strong>
-            <button id="refresh-sources" type="button" aria-label="Refresh data source statuses">Refresh</button>
-          </div>
-          <div id="sources-status" class="ss-sources-rows" aria-live="polite">
-            <p>Checking provider access…</p>
-          </div>
-          <small class="ss-source-note">Provider counts overlap. Not every feed is connected; a listing is not a verified coin.</small>
-        </div>
-      </details>
-    </aside>
+  <aside class="scan-landing-snapshot" aria-label="Live market snapshot">
+    <div class="scan-snapshot-title"><div><small>OBSERVED MARKET PULSE</small><h2>Global overview</h2></div><span id="landing-market-state" class="scan-snapshot-state">Checking source</span></div>
+    <div class="scan-snapshot-cells">
+      <div><small>Reported market cap</small><strong id="landing-cap">—</strong></div>
+      <div><small>Reported 24h volume</small><strong id="landing-volume">—</strong></div>
+      <div><small>BTC market dominance</small><strong id="landing-dominance">—</strong></div>
+      <div><small>Coins reported by source</small><strong id="landing-coins">—</strong></div>
     </div>
-    
-    <section id="market-overview" class="market-overview" aria-label="Global market statistics">
-      <div class="metric-card">
-        <span class="metric-label">Global Market Cap</span>
-        <strong id="metric-cap">—</strong>
-        <span id="metric-cap-change" class="metric-sub">Awaiting provider</span>
-      </div>
-      <div class="metric-card">
-        <span class="metric-label">24h Trading Volume</span>
-        <strong id="metric-volume">—</strong>
-        <span class="metric-sub">Aggregated external markets</span>
-      </div>
-      <div class="metric-card">
-        <span class="metric-label">Bitcoin Dominance</span>
-        <strong id="metric-btc">—</strong>
-        <span class="metric-sub">Share of market capitalization</span>
-      </div>
-      <div class="metric-card">
-        <span class="metric-label">Tracked Cryptocurrencies</span>
-        <strong id="metric-coins">—</strong>
-        <span class="metric-sub">Reported by data provider</span>
-      </div>
-    </section>
-    <section id="explorer-controls" class="explorer-controls" hidden aria-label="Explorer search">
-      <form id="explorer-search" class="explorer-search">
-        <label for="q">Explore Bitcoin Silver L1</label>
-        <div class="explorer-input">
-          <input id="q" name="q" required maxlength="128" autocomplete="off" placeholder="Search block height, block hash, transaction ID or address">
-          <button type="submit">Search chain</button>
-        </div>
-      </form>
-      <div class="network-pick"><label for="net">Network</label><select id="net"><option>Loading networks…</option></select></div>
-    </section>
-    <main id="research-view" aria-live="polite">
-      <div class="loading-panel">Loading market data…</div>
-    </main>
-    <main id="view" hidden aria-live="polite"><div class="loading-panel">Checking node connection…</div></main>
-    <div class="scan-hub-promo"><div><p class="eyebrow">DISCOVER MORE</p><h2>Beyond market-cap rankings.</h2><p>Bitcoin Silver is available by unique CoinGecko ID even when it ranks outside the first thousand. Search the full catalog, browse CoinMarketCap markets, Coinbase spot pairs, read crypto news and compare mining assumptions.</p></div><a href="./coin-watch.html">Explore Coin Watch →</a></div><div class="data-disclaimer">
-      <strong>SilverScan is an independent Silver Labs product.</strong> Prices and DEX data are attributed external research, not SilvEx trades. The BTCS L1 explorer is a node-backed development implementation. Market listing does not verify token legitimacy or promise trading, mining rewards, settlement or custody.
-    </div>
+    <div class="scan-snapshot-footer"><span id="landing-market-source">Awaiting an observed provider response</span><a href="./markets.html">View full terminal →</a></div>
+  </aside>
+</div></section>
+<section class="shell scan-landing-section">
+  <div class="scan-section-head"><div><p class="scan-overline">EXPLORE THE PLATFORM</p><h2>Research hubs</h2><p>Open a dedicated workspace for each part of the ecosystem.</p></div><a href="./features.html">All features →</a></div>
+  <div class="scan-hub-grid">
+    <a class="scan-hub-card" href="./markets.html"><span class="scan-hub-symbol">↗</span><span class="scan-hub-index">01 / MARKETS</span><h3>Crypto markets</h3><p>Provider-ranked prices, volume, capitalization and performance across market pages.</p><span class="scan-card-action">Open markets →</span></a>
+    <a class="scan-hub-card" href="./coin-watch.html"><span class="scan-hub-symbol">◎</span><span class="scan-hub-index">02 / ASSETS</span><h3>Coin Watch</h3><p>Discover provider IDs, create a browser watchlist, and manage manual portfolio entries locally.</p><span class="scan-card-action">Research assets →</span></a>
+    <a class="scan-hub-card" href="./universal-explorer.html"><span class="scan-hub-symbol">⌁</span><span class="scan-hub-index">03 / ON-CHAIN</span><h3>Universal explorer</h3><p>Search supported network structures and see where read-only RPC or a full index is required.</p><span class="scan-card-action">Explore chains →</span></a>
+    <a class="scan-hub-card" href="./mining.html#pool-market"><span class="scan-hub-symbol">◇</span><span class="scan-hub-index">04 / PROOF OF WORK</span><h3>Mining pools</h3><p>Compare observed pool details across PoW networks when authorized source data is connected.</p><span class="scan-card-action">See mining research →</span></a>
+    <a class="scan-hub-card" href="./exchanges.html"><span class="scan-hub-symbol">⇄</span><span class="scan-hub-index">05 / VENUES</span><h3>Exchange directory</h3><p>Research reported exchange identities, and provider-defined rankings where available.</p><span class="scan-card-action">Browse exchanges →</span></a>
+    <a class="scan-hub-card" href="./news.html"><span class="scan-hub-symbol">✳</span><span class="scan-hub-index">06 / INDUSTRY</span><h3>Crypto news</h3><p>Publisher-attributed headlines with links back to original reporting and optional artwork.</p><span class="scan-card-action">Read headlines →</span></a>
   </div>
-  <footer class="site-footer">
-    <div class="shell footer-content">
-      <div><strong>SILVERSCAN</strong><p>One research workspace. Multiple networks. Verifiable sources.</p></div>
-      <div class="footer-links">
-        <a href="https://github.com/Silver-Labs-Technology-Development/Silver-Scan" target="_blank" rel="noopener noreferrer">Source & roadmap</a>
-        <a href="https://www.coingecko.com/" target="_blank" rel="noopener noreferrer">Market data: CoinGecko</a>
-        <a href="./coin-watch.html">News &amp; Coin Universe</a>
-        <a href="https://dexscreener.com/" target="_blank" rel="noopener noreferrer">DEX data: DEX Screener</a>
-      </div>
-    </div>
-  </footer>
-</body>
-</html>
+</section>
+<section class="shell scan-landing-section scan-landing-observations">
+  <div class="scan-section-head"><div><p class="scan-overline">SOURCE-ATTRIBUTED OBSERVATIONS</p><h2>From the live market feed</h2><p>Market observations, never hypothetical portfolio values or trading recommendations.</p></div><span id="landing-asset-state" class="scan-freshness">Checking source…</span></div>
+  <div id="landing-market-rows" class="scan-market-grid" aria-live="polite"><p class="scan-landing-empty">Loading market highlights…</p></div>
+  <div class="scan-source-disclaimer">Sources report market values on their own schedules. The same coin may appear under more than one provider identity. Rankings and listing status are not independently verified by SilverScan.</div>
+</section>
+<section class="scan-landing-bottom"><div class="shell scan-bottom-layout"><div><p class="scan-overline">BUILT BY SILVER LABS</p><h2>A research platform in active development.</h2><p>SilverScan keeps source labels, known gaps, and feature readiness visible. New providers and chain adapters are added as their access rights and integrations are verified.</p></div><div class="scan-bottom-links"><a href="./insights.html">Market insights →</a><a href="./compare.html">Compare coins →</a><a href="./features.html">Explore the feature directory →</a></div></div></section>
+</main>
+<footer class="site-footer"><div class="shell footer-content"><div><strong>SILVERSCAN</strong><p>Independent Silver Labs market and blockchain research.</p></div><div class="footer-links"><a href="./markets.html">Markets</a><a href="./mining.html">Mining</a><a href="./exchanges.html">Exchanges</a><a href="./features.html">All Features</a></div></div></footer>
+</body></html>
