@@ -100,7 +100,7 @@ export function sentimentGauge(score,label){
   const out=document.createElement('div');out.className='sentiment-graphic';
   if(!good(score)||score<0||score>100){out.textContent='Sentiment unavailable';return out;}
   const track=document.createElement('div');track.className='sentiment-track';
-  track.style.background='conic-gradient(from 270deg,#de645b 0% 18%,#eaa960 18% 40%,#e6c878 40% 58%,#9bca87 58% 78%,#299d75 78% 100%)';
+  track.style.background='linear-gradient(90deg,#de645b 0%,#eaa960 25%,#e6c878 50%,#9bca87 75%,#299d75 100%)';
   const pointer=document.createElement('div');pointer.className='sentiment-pointer';
   pointer.style.left=String(Math.max(0,Math.min(100,score)))+'%';
   track.append(pointer);
