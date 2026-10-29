@@ -10,7 +10,7 @@ const WATCH_KEY='silver-scan-coin-watch-v1',THEME_KEY='silver-scan-theme-v1';
 const moneyFmt=new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:2});
 const compactFmt=new Intl.NumberFormat('en-US',{notation:'compact',maximumFractionDigits:2});
 const numberFmt=new Intl.NumberFormat('en-US',{maximumFractionDigits:0});
-const state={tab:'markets',market:null,heatmap:null,global:null,sentiment:null,sort:'rank',direction:1,query:'',marketPage:0,marketPageSize:50,marketHasMore:false,marketLoading:false,marketSeq:0,selected:null};
+const state={tab:'markets',market:null,heatmap:null,global:null,sentiment:null,sort:'rank',direction:1,query:'',marketPage:0,marketPageSize:50,marketProvider:'cg',marketHasMore:false,marketLoading:false,marketSeq:0,selected:null};
 function el(tag,text=null,cls=''){
   const item=document.createElement(tag);if(text!==null&&text!==undefined)item.textContent=String(text);
   if(cls)item.className=cls;return item;
@@ -33,6 +33,38 @@ function source(data){
   if(data?.fetched_at)row.append(el('span','Retrieved '+new Date(data.fetched_at*1000).toLocaleString()));
   if(data?.stale)row.append(el('strong','STALE cached data','down'));
   return row;
+}
+const marketProviders={
+  cg:{label:'CoinGecko',endpoint:'/api/catalog/page'},
+  cmc:{label:'CoinMarketCap',endpoint:'/api/coinmarketcap/active'},
+  lcw:{label:'LiveCoinWatch',endpoint:'/api/livecoinwatch/markets'}
+};
+function providerResearch(coin){
+  if(state.marketProvider==='cg')return openAsset(coin.provider_id);
+  location.href='./coin-watch.html?search='+encodeURIComponent(coin.name||coin.symbol||coin.provider_id);
+}
+async function loadSources(){
+  const slot=$('sources-status');if(!slot)return;
+  slot.replaceChildren(el('p','Reading provider configuration and observed source activity…','provider-note'));
+  try{
+    const data=await fetchJson('/api/sources/status');
+    slot.replaceChildren(...(data.sources||[]).map(src=>{
+      const card=wrap('provider-card',el('strong',src.name));
+      const statusName=src.status==='observed_recently'?'Observed recently':
+        src.status==='observed_earlier'?'Earlier observation':
+        src.status==='requestable'?'Available on request':
+        src.status==='api_key_required'?'API key required':
+        src.status==='operator_import_configured'?'Imported data configured':'Source permission needed';
+      const stateEl=el('span',statusName,'provider-state');
+      stateEl.classList.add(src.status==='observed_recently'?'provider-observed':'provider-pending');
+      card.append(stateEl,el('small',src.feature,'provider-feature'));
+      card.append(el('small',src.last_observed?
+        'Last response: '+new Date(src.last_observed*1000).toLocaleString():
+        'No successful observation recorded in this process','provider-seen'));
+      if(src.docs_url)card.append(link(src.docs_url,'Source website / API ↗'));
+      return card;
+    }));
+  }catch(error){slot.replaceChildren(errorMessage('Provider status unavailable: '+error.message));}
 }
 function errorMessage(text){return el('p',text,'notice error');}
 function display(...nodes){research.replaceChildren(...nodes);}
@@ -157,7 +189,7 @@ function marketHighlights(){
     const ol=el('ol',null,'highlight-list');
     list.forEach((coin,i)=>{
       const row=el('li',null,'highlight-row');
-      row.append(el('span',String(i+1),'position'),button((coin.name||coin.provider_id),()=>openAsset(coin.provider_id),'grow'),change(coin.change_24h_pct));
+      row.append(el('span',String(i+1),'position'),button((coin.name||coin.provider_id),()=>providerResearch(coin),'grow'),change(coin.change_24h_pct));
       ol.append(row);
     });
     if(!list.length)ol.append(el('li','Market movement data unavailable','muted'));
@@ -202,7 +234,7 @@ function tableCoinRows(coins){
     const td=val=>{const item=el('td');if(val instanceof Node)item.append(val);else item.textContent=String(val??'—');tr.append(item);return item;};
     td(coin.rank??'—');
     const cell=td('');
-    const name=button(coin.name||coin.provider_id,()=>openAsset(coin.provider_id),'coin-button');
+    const name=button(coin.name||coin.provider_id,()=>providerResearch(coin),'coin-button');
     const text=wrap('coin-text',name,el('span',(coin.symbol||'—').toUpperCase(),'ticker'));
     cell.append(wrap('coin-cell',icon(coin),text));
     td(money(coin.price_usd));
@@ -210,7 +242,7 @@ function tableCoinRows(coins){
     td(usdCompact(coin.market_cap_usd));td(usdCompact(coin.volume_24h_usd));
     td(count(coin.circulating_supply));
     td(sparkline(coin.sparkline_7d,coin.change_7d_pct));
-    td(star(coin));
+    td(state.marketProvider==='cg'?star(coin):button('Research ↗',()=>providerResearch(coin),'watch-button'));
     tbody.append(tr);
   });
   return tbody;
@@ -236,7 +268,7 @@ function buildMarketTable(){
   const shown=filtered(),holder=panel('panel-tight');
   holder.id='markets-table-section';
   const title=wrap('',el('h2','Cryptocurrencies by Market Cap'));
-  title.append(el('p','CoinGecko active market observations, ranked by provider across multiple pages. Search locally within this page or use Coin Watch to find any provider ID.','research-note'));
+  title.append(el('p','Source-specific ranked market observations. Switch market providers without merging coins by ticker. Find low-ranked coins in Coin Watch.','research-note'));
   const search=el('input');search.type='search';search.placeholder='Filter current provider page';search.value=state.query;
   search.setAttribute('aria-label','Filter loaded provider page');
   const sort=el('select');sort.setAttribute('aria-label','Sort currently loaded coins');
@@ -244,13 +276,22 @@ function buildMarketTable(){
     const item=el('option',name);item.value=v;sort.append(item);
   });
   sort.value=state.sort;
+  const provider=el('select');provider.setAttribute('aria-label','Market data provider');provider.id='market-provider';
+  Object.entries(marketProviders).forEach(([key,value])=>{
+    const option=el('option',value.label);option.value=key;provider.append(option);
+  });
+  provider.value=state.marketProvider;
+  provider.addEventListener('change',()=>{
+    state.marketProvider=provider.value;state.marketPage=0;state.market=null;
+    loadMarket(true);
+  });
   const size=el('select');size.setAttribute('aria-label','Coins per page');size.id='market-page-size';
   [25,50,100,200].forEach(num=>{
     const item=el('option',num+' coins per page');item.value=String(num);size.append(item);
   });
   size.value=String(state.marketPageSize);
   const direction=button(state.direction===1?'Ascending ↑':'Descending ↓',()=>{state.direction*=-1;paintTable();},'tab-button');
-  const controls=wrap('toolbar-controls',search,sort,size,direction);
+  const controls=wrap('toolbar-controls',provider,search,sort,size,direction);
   size.addEventListener('change',()=>{
     state.marketPageSize=Number(size.value);state.marketPage=0;loadMarket(true);
   });
@@ -285,25 +326,30 @@ function renderMarketHome(){
     nodes.push(sectionHeading('Market Intelligence','Independent sources, explicitly identified.'));
     nodes.push(wrap('visualization-grid',dominanceCard(),sentimentCard()));
   }
-  nodes.push(buildMarketTable(),source(state.market),
+  nodes.push(buildMarketTable(),source(state.market));
+  if(state.marketProvider==='lcw'){
+    nodes.push(link('https://www.livecoinwatch.com/','Market data by LiveCoinWatch ↗'));
+  }
+  nodes.push(
     el('p','Only assets with a provider-reported positive price and 24-hour trading volume appear on market pages. Other discoverable assets remain available through Coin Watch.','research-note'));
   display(...nodes);
 }
 async function loadMarket(force=false){
   if(state.market&&!force){
-    status(state.market.stale?'Showing stale market snapshot':'CoinGecko market page',state.market);
+    status(state.market.stale?'Showing stale market snapshot':marketProviders[state.marketProvider].label+' market page',state.market);
     renderMarketHome();return;
   }
   const request=++state.marketSeq;
   state.marketLoading=true;
   display(el('p','Loading market-cap page '+(state.marketPage+1)+' ('+state.marketPageSize+' per page)…','loading-panel'));
   try{
-    const data=await fetchJson('/api/catalog/page?page='+(state.marketPage+1)+'&limit='+state.marketPageSize);
+    const data=await fetchJson(marketProviders[state.marketProvider].endpoint+'?page='+(state.marketPage+1)+'&limit='+state.marketPageSize);
     if(request!==state.marketSeq)return;
     if(!Array.isArray(data.assets))throw Error('Market provider returned an invalid list');
     state.market=data;state.marketHasMore=data.has_more===true;
     state.query='';state.marketLoading=false;
-    status(data.stale?'STALE: source observation cached':'CoinGecko market page',data);
+    status(data.stale?'STALE: source observation cached':marketProviders[state.marketProvider].label+' market page',data);
+    loadSources();
     renderMarketHome();
   }catch(error){
     if(request!==state.marketSeq)return;
@@ -500,6 +546,8 @@ function bindSearch(){
 }
 function start(){
   setupTheme();bindSearch();
+  $('refresh-sources')?.addEventListener('click',loadSources);
+  loadSources();
   tabs.forEach(item=>item.addEventListener('click',()=>switchTab(item.dataset.tab)));
   loadGlobal();loadSentiment();
   const tab=location.hash.slice(1);
