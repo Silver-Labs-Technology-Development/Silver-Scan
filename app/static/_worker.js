@@ -308,6 +308,59 @@ function poolCoins(){
     })),
     note:"Public alpha staging information, NOT live mining or payout availability."};
 }
+
+// CMC's public endpoint returns exchange identities and tracked status, NOT
+// verified liquidity or safety scores. It needs no API key. Provider-attributed.
+async function cmcExchangeDirectory(url){
+  const page=clampedInt(url.searchParams.get('page'),1,1,100);
+  const limit=clampedInt(url.searchParams.get('limit'),30,1,100);
+  const endpoint=new URL('https://pro-api.coinmarketcap.com/public-api/v1/exchange/map');
+  endpoint.searchParams.set('start',String((page-1)*limit+1));
+  endpoint.searchParams.set('limit',String(limit));
+  endpoint.searchParams.set('listing_status','active');
+  const response=await fetch(endpoint.toString(),{
+    headers:{Accept:'application/json'},redirect:'error',signal:AbortSignal.timeout(8000),
+    cf:{cacheTtl:900,cacheEverything:true}
+  });
+  if(!response.ok)throw Error('CMC exchange identity feed unavailable');
+  const rawText=await response.text();
+  if(rawText.length>1200000)throw Error('Exchange response exceeds safe size');
+  const raw=JSON.parse(rawText);
+  if(!Array.isArray(raw?.data))throw Error('Invalid CMC exchange response');
+  const exchanges=raw.data.filter(item=>item&&Number.isInteger(item.id))
+    .map(item=>({
+      id:'coinmarketcap:'+item.id,
+      name:String(item.name||'').slice(0,110),
+      slug:String(item.slug||'').slice(0,110),
+      tracked:item.is_active===1,
+      rank:null,trust_score:null,trade_volume_24h_btc:null,
+      is_redistributable:item.is_redistributable===1
+    }));
+  return {source:'CoinMarketCap /public-api/v1/exchange/map',exchanges,page,limit,
+    has_more:raw.data.length===limit,fetched_at:Math.floor(Date.now()/1000),
+    note:'Provider exchange identities and tracked status only. No CMC trust score, 24h volume, safety certification, or cross-provider ID matching.'};
+}
+// CG metrics are available only where the owner has activated its approved API.
+async function cgExchangeDirectory(url,env){
+  const page=clampedInt(url.searchParams.get('page'),1,1,100);
+  const limit=clampedInt(url.searchParams.get('limit'),30,1,100);
+  const raw=await coingecko('/exchanges',{page,per_page:limit},env);
+  if(!Array.isArray(raw))throw Error('CG exchange data unavailable');
+  const finite=n=>typeof n==='number'&&Number.isFinite(n)?n:null;
+  return {source:'CoinGecko /exchanges',page,limit,has_more:raw.length===limit,
+    fetched_at:Math.floor(Date.now()/1000),
+    exchanges:raw.map(item=>({
+      id:'coingecko:'+String(item?.id||'').slice(0,110),
+      name:String(item?.name||'').slice(0,110),
+      country:String(item?.country||'').slice(0,100),
+      rank:Number.isInteger(item?.trust_score_rank)?item.trust_score_rank:null,
+      trust_score:finite(item?.trust_score),
+      trade_volume_24h_btc:finite(item?.trade_volume_24h_btc),
+      tracked:true,website:null
+    })),
+    note:'Trust scores and BTC volume are CoinGecko-defined observations; not independent exchange safety ratings.'};
+}
+
 export default {
   async fetch(request,env){
     const url=new URL(request.url);
@@ -319,6 +372,8 @@ export default {
       if(path==="/api/alpha/health")return json({status:"alpha",backend:"Cloudflare Workers",live_services:["static site","CoinLore market API","alternative.me sentiment"],locked_services:["account storage","public RPC","trading","payouts"],timestamp:Date.now()});
       if(path==="/api/sources/status")return json(sources(env));
       if(path==="/api/mining/coins")return json(poolCoins());
+      if(path==="/api/exchanges/cmc"||path==="/api/exchanges/cmc-map")return json(await cmcExchangeDirectory(url));
+      if(path==="/api/insights/exchanges"||path==="/api/exchanges/coingecko")return json(await cgExchangeDirectory(url,env));
       if(path==="/api/market/global")return json(cgEnabled(env)?await globalMarket(env):await loreGlobal());
       if(path==="/api/coinlore/markets")return json(await loreMarkets(url));
       if(path==="/api/coinlore/quote")return json(await loreQuote(url));
