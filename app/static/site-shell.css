@@ -1,0 +1,61 @@
+/* One readable, responsive SilverScan header on every route. */
+.site-header{position:relative;z-index:30;background:var(--panel)!important;border-color:var(--line)!important}
+.site-header .ss-header-main{min-height:76px;gap:clamp(12px,2.2vw,28px)}
+.site-header .ss-brand .brand-type strong{font-weight:850}
+.site-header .ss-search{max-width:505px;min-width:185px;margin-left:auto}
+.site-header .ss-header-actions{flex:none;gap:9px}
+.site-header .ss-mobile-toggle{display:none;align-items:center;gap:7px;justify-content:center;background:var(--panel-alt);
+  border:1px solid var(--line);border-radius:9px;color:var(--text);font-size:12px;font-weight:750;
+  min-height:42px;padding:8px 12px}
+.site-header .ss-nav-wrap{background:var(--panel)!important;border-top:1px solid var(--line);overflow:visible}
+.site-header .ss-nav{display:flex;align-items:stretch;gap:clamp(9px,2vw,27px);overflow:visible;
+  white-space:normal;min-height:48px}
+.site-header .ss-nav .ss-nav-item{min-height:48px;display:inline-flex;gap:7px;align-items:center;
+  padding:14px 7px 11px;background:transparent;color:var(--muted);font-size:12px;
+  font-weight:760;line-height:1.3;white-space:nowrap;text-decoration:none;
+  border:0;border-bottom:3px solid transparent;cursor:pointer}
+.site-header .ss-nav .ss-nav-item:hover,.site-header .ss-nav .ss-nav-item:focus-visible{color:var(--text);text-decoration:none}
+.site-header .ss-nav .ss-nav-item.ss-current,.site-header .ss-nav .ss-nav-item[aria-current=page],
+.site-header .ss-nav-dropdown.ss-current>.ss-nav-summary{color:var(--brand);border-bottom-color:var(--brand)}
+.site-header .ss-nav-dropdown{position:relative;z-index:10}
+.site-header .ss-nav-summary{list-style:none;user-select:none}
+.site-header .ss-nav-summary::-webkit-details-marker{display:none}
+.site-header .ss-nav-dropdown[open] .ss-nav-summary span{transform:rotate(180deg)}
+.site-header .ss-dropdown-panel{position:absolute;top:calc(100% - 1px);left:0;min-width:225px;
+  display:flex;flex-direction:column;padding:8px;background:var(--panel);
+  border:1px solid var(--line);border-radius:0 0 12px 12px;
+  box-shadow:0 15px 26px rgba(5,22,40,.24)}
+.site-header .ss-dropdown-panel a{display:block;border-radius:7px;padding:10px 12px;
+  color:var(--text);font-size:12px;font-weight:650;text-decoration:none}
+.site-header .ss-dropdown-panel a:hover,.site-header .ss-dropdown-panel a:focus-visible{
+  background:var(--panel-alt);color:var(--brand)}
+@media(max-width:970px){
+  .site-header .ss-header-main{min-height:70px}
+  .site-header .ss-search{max-width:none}
+  .site-header .ss-mobile-toggle{display:inline-flex}
+  .site-header .ss-nav-wrap{display:none}
+  .site-header .ss-nav-wrap.ss-open{display:block;position:absolute;left:0;right:0;top:100%;
+    box-shadow:0 18px 30px rgba(5,22,40,.22);border-bottom:1px solid var(--line)}
+  .site-header .ss-nav{display:flex;flex-direction:column;align-items:stretch;
+    padding-top:8px;padding-bottom:12px;gap:1px;max-height:75vh;overflow-y:auto}
+  .site-header .ss-nav .ss-nav-item{min-height:42px;padding:11px 13px;line-height:1.4;
+    border:0!important}
+  .site-header .ss-nav .ss-nav-item.ss-current,.site-header .ss-nav .ss-nav-item[aria-current=page],
+  .site-header .ss-nav-dropdown.ss-current>.ss-nav-summary{background:var(--panel-alt);color:var(--brand);border-radius:8px}
+  .site-header .ss-nav-dropdown{position:static}
+  .site-header .ss-dropdown-panel{position:static;min-width:0;border:0;box-shadow:none;
+    background:var(--panel-alt);border-radius:9px;margin:0 0 8px 11px}
+  .site-header .ss-dropdown-panel a{padding-left:24px}
+}
+@media(max-width:700px){
+  .site-header .ss-header-main{flex-wrap:wrap;row-gap:6px;padding-top:12px;padding-bottom:12px}
+  .site-header .ss-brand{flex:1}
+  .site-header .ss-search{order:3;flex:1 1 100%;max-width:none;margin:0}
+  .site-header .ss-brand .brand-type strong{font-size:19px}
+  .site-header .ss-header-actions .currency-pill{display:none}
+}
+@media(max-width:360px){
+  .site-header .ss-brand .brand-type small{font-size:7px}
+  .site-header .ss-mobile-toggle span{display:none}
+  .site-header .ss-search kbd{display:none}
+}
