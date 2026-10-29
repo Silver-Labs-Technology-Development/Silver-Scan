@@ -38,7 +38,7 @@ class Handler(BaseHTTPRequestHandler):
             self.send_header(
                 "Content-Security-Policy",
                 "default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; "
-                "connect-src 'self'; img-src 'self' data:; base-uri 'none'; "
+                "connect-src 'self'; img-src 'self' data: https://coin-images.coingecko.com https://assets.coingecko.com; base-uri 'none'; "
                 "form-action 'self'; frame-ancestors 'none'",
             )
         self.end_headers()
@@ -78,6 +78,9 @@ class Handler(BaseHTTPRequestHandler):
             return
         if path == "/styles.css":
             self._static("styles.css", "text/css; charset=utf-8")
+            return
+        if path == "/charts.js":
+            self._static("charts.js", "application/javascript; charset=utf-8")
             return
         if path == "/research.js":
             self._static("research.js", "application/javascript; charset=utf-8")
