@@ -3,7 +3,7 @@
   const header=document.querySelector('header.site-header');
   if(!header)return;
   const file=location.pathname.split('/').pop()||'index.html';
-  const isHome=file==='index.html';
+  const isMarket=file==='markets.html';
   const view={
     'coin-watch.html':'watch','news.html':'news','mining.html':'mining',
     'universal-explorer.html':'explorer'
@@ -28,7 +28,8 @@
     '</div>',
     '<div class="nav-wrap ss-nav-wrap" id="ss-navigation">',
       '<nav class="shell research-nav ss-nav" aria-label="SilverScan primary navigation">',
-        '<a class="ss-nav-item" data-ss-section="markets" href="./#markets">Markets</a>',
+        '<a class="ss-nav-item" data-ss-section="home" href="./">Home</a>',
+        '<a class="ss-nav-item" data-ss-section="markets" href="./markets.html#markets">Markets</a>',
         '<a class="ss-nav-item" data-ss-section="watch" href="./coin-watch.html">Coin Watch</a>',
         '<a class="ss-nav-item" data-ss-section="explorer" href="./universal-explorer.html">Explorer</a>',
         '<a class="ss-nav-item" data-ss-section="mining" href="./mining.html">Mining</a>',
@@ -39,9 +40,9 @@
             '<a href="./exchanges.html">Exchange Directory</a>',
             '<a href="./insights.html">Market Insights</a>',
             '<a href="./compare.html">Compare Coins</a>',
-            '<a href="./#heatmap">Market Heatmap</a>',
-            '<a href="./#dex">DEX Scan</a>',
-            '<a href="./#explorer">Bitcoin Silver L1</a>',
+            '<a href="./markets.html#heatmap">Market Heatmap</a>',
+            '<a href="./markets.html#dex">DEX Scan</a>',
+            '<a href="./markets.html#explorer">Bitcoin Silver L1</a>',
             '<a href="./features.html">All Features</a>',
           '</div>',
         '</details>',
@@ -54,7 +55,8 @@
   const links=[...header.querySelectorAll('[data-ss-section]')];
 
   function currentSection(){
-    if(isHome)return ['#heatmap','#dex','#explorer'].includes(location.hash)?'research':'markets';
+    if(file==='index.html')return 'home';
+    if(isMarket)return ['#heatmap','#dex','#explorer'].includes(location.hash)?'research':'markets';
     return view[file]||'research';
   }
   function markCurrent(){
@@ -102,8 +104,8 @@
   header.querySelectorAll('.ss-nav a').forEach(a=>a.addEventListener('click',()=>{
     closeMenu();dropdown.open=false;
   }));
-  // Home's search is owned by research.js; other pages get the same search path.
-  if(!isHome)header.querySelector('#global-search-form').addEventListener('submit',event=>{
+  // The market terminal owns its own search; all other pages use Coin Watch.
+  if(!isMarket)header.querySelector('#global-search-form').addEventListener('submit',event=>{
     event.preventDefault();
     const q=header.querySelector('#global-search').value.trim();
     if(q.length>=2)location.href='./coin-watch.html?search='+encodeURIComponent(q);
