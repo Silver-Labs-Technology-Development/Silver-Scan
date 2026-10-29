@@ -15,7 +15,7 @@ making that asset tradeable.
 | CoinGecko | `/api/markets`, `/api/market/global`, `/api/assets/chart`, `/api/assets/profile` | Existing top-market overview, market cap, charts and profiles | Separate aggregate view; not global all-coin indexing |
 | CoinMarketCap | `/api/coinmarketcap/active?page=1&limit=100` | Separate active-market listings, authenticated with `CMC_API_KEY` when supplied | Keyless rate-limited mode also supported; CMC provider ID is preserved |
 | Coinbase Advanced Trade | `/api/coinbase/pairs?offset=0&limit=100` | Public spot-trading pair information | Pair count is **not** a unique coin count or global market cap |
-| Publisher RSS | `/api/news?limit=30` | CoinDesk, Cointelegraph, Decrypt source headlines, dates and article URLs | No copied article body or unsupported image scraping |
+| Publisher RSS | `/api/news?limit=30` | CoinDesk, Cointelegraph, Decrypt, The Block and Bitcoin Magazine source headlines, dates and article URLs | No copied article body or unsupported image scraping |
 | Mining model | `/api/mining/estimate?...eight explicit inputs...` | Network-share expected output, gross estimate and electricity | Not actual miner payouts, an investment result or a guarantee |
 | Bitcoin Silver RPC | `/api/mining/overview` | Locally connected Core network metrics | Requires a functioning node, no pooled miner metrics without Silver Pool adapter |
 | MiningPoolStats | External directory link | Known external point of reference | No verified licensed bulk API has been established; **no third-party scraping or import is active** |
