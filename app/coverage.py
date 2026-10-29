@@ -12,6 +12,8 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
+from html.parser import HTMLParser
+from html import unescape
 import json
 import math
 import os
@@ -43,6 +45,72 @@ _CACHE={}
 _SIZES={"json":4_000_000,"xml":600_000}
 _ID=re.compile(r"^[a-z0-9][a-z0-9-]{0,99}$")
 _CMC_API_KEY=os.getenv("CMC_API_KEY", "").strip()
+
+# Favicons are requested directly from the publisher's public website; no
+# tracking proxy or third-party favicon API. Bad/missing images use text fallback.
+PUBLISHER_FAVICONS = {
+    "CoinDesk": "https://www.coindesk.com/favicon.ico",
+    "Cointelegraph": "https://cointelegraph.com/favicon.ico",
+    "Decrypt": "https://decrypt.co/favicon.ico",
+    "The Block": "https://www.theblock.co/favicon.ico",
+    "Bitcoin Magazine": "https://bitcoinmagazine.com/favicon.ico",
+}
+_IMAGE_DOMAINS = {
+    "CoinDesk": ("coindesk.com", "coindeskcdn.com", "cdn.sanity.io"),
+    "Cointelegraph": ("cointelegraph.com",),
+    "Decrypt": ("decrypt.co",),
+    "The Block": ("theblock.co",),
+    "Bitcoin Magazine": ("bitcoinmagazine.com", "btcinc.com"),
+}
+_MEDIA = "{http://search.yahoo.com/mrss/}"
+_CONTENT = "{http://purl.org/rss/1.0/modules/content/}"
+
+def _news_image(url, publisher):
+    """Only return publisher/CDN-owned HTTPS article thumbnails from feed data."""
+    if not isinstance(url, str) or len(url)>1200:
+        return None
+    candidate=unescape(url.strip())
+    try:
+        parts=urlsplit(candidate)
+        hostname=parts.hostname
+        if (parts.scheme != "https" or not hostname or parts.username or
+                parts.password or parts.port not in (None,443)):
+            return None
+    except ValueError:
+        return None
+    if hostname not in _IMAGE_DOMAINS.get(publisher,()):
+        suffixes=_IMAGE_DOMAINS.get(publisher,())
+        if not any(hostname.endswith("."+suffix) for suffix in suffixes):
+            return None
+    if not parts.path or parts.path=="/":
+        return None
+    return candidate
+
+class _FirstImage(HTMLParser):
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.source=None
+    def handle_starttag(self,tag,attrs):
+        if self.source is None and tag.lower()=="img":
+            attrs=dict(attrs)
+            self.source=attrs.get("src") or attrs.get("data-src")
+
+def _rss_image(item,publisher):
+    """RSS media:thumbnail, media:content, enclosure, description image."""
+    for tag in (_MEDIA+"thumbnail",_MEDIA+"content","enclosure"):
+        for node in item.findall(tag):
+            url=_news_image(node.get("url"),publisher)
+            if url:return url
+    for tag in ("description",_CONTENT+"encoded"):
+        raw=item.findtext(tag)
+        if raw:
+            parser=_FirstImage()
+            try:parser.feed(raw[:20000])
+            except ValueError:continue
+            valid=_news_image(parser.source,publisher)
+            if valid:return valid
+    return None
+
 
 
 def _fetch(url, *, headers=None, kind="json"):
@@ -288,7 +356,9 @@ def news(limit=20):
                     try:timestamp=int(parsedate_to_datetime(published).timestamp())
                     except (TypeError,ValueError,OverflowError):timestamp=None
                     stories.append({"source":publisher,"title":title,"url":address,
-                                    "published_at":timestamp})
+                                    "published_at":timestamp,
+                                    "thumbnail_url":_rss_image(item,publisher),
+                                    "favicon_url":PUBLISHER_FAVICONS.get(publisher)})
             except (M.ProviderUnavailable,ET.ParseError):
                 continue
         if not sources:raise M.ProviderUnavailable("News publishers unavailable")
@@ -296,10 +366,10 @@ def news(limit=20):
         # A publisher timestamp is separate from retrieval time.
         return {"articles":sorted(unique.values(),key=lambda x:x["published_at"] or 0,reverse=True),
                 "sources":sources}
-    data,ts,stale=_memo("news:rss:5",load,900,3600)
+    data,ts,stale=_memo("news:rss:images:v2",load,900,3600)
     return {"source":"Publisher RSS feeds","sources":data["sources"],"articles":data["articles"][:limit],
             "fetched_at":ts,"stale":stale,
-            "note":"Headlines and links only. Publishers own their stories; no reproduced articles or endorsements."}
+            "note":"Publisher RSS headlines, optional publisher-supplied thumbnails and favicons only; full articles remain at the original source. Images can be unavailable."}
 
 
 def mining_estimate(inputs):
