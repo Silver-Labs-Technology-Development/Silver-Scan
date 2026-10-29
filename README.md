@@ -11,10 +11,13 @@ prototype with a developing multi-coin market research terminal.
 | Section | Implementation | Important limitation |
 |---|---|---|
 | BTCS L1 Explorer | Python RPC block/transaction lookup, address views, SQLite indexing | Local prototype; partial indexing and reorg gaps; not a canonical proof |
-| Markets | CoinGecko-backed, USD market-cap page with ranks, prices, volume and supply | External reference data; first 100 assets; no historical charts or verified chain identity |
-| Coin Watch | Watch/unwatch provider IDs saved in this browser | No login, cloud sync or alerts; display limited to top-100 market snapshot |
+| Markets & Graphs | CoinGecko global market summary, ranks, prices, supply, external volume, 1h/24h/7d changes and live-provider mini-charts | First 100 provider assets; third-party data and rate limits; not chain-verified |
+| Coin Watch | Watch/unwatch provider IDs saved in the browser | No login, cloud sync or alerts; display limited to top-100 market snapshot |
+| Coin Profile & Price Charts | Provider-backed asset profile, contract references, price history for 24h/7d/30d/90d/1y where API plans permit | Historical coverage varies by provider and API plan; missing history is shown as unavailable |
+| Sentiment & Dominance | Alternative.me Crypto Fear & Greed score/history and CoinGecko BTC/ETH market-cap dominance graphic | Market-level reference data, not coin-specific sentiment or buy/sell advice |
 | DEX Scan | DEX Screener token/pair search with chain, pair and token contract identity | External research only, no SilvEx listing, trade or swap |
 | BTCS L2 / NFT / token indexing | Future phased integration | Not implemented or operational |
+| Mining research | BTCS Core network difficulty/hashrate/height readout and external MiningPoolStats reference | Requires a connected node; not Silver Pool miner accounting or directory integration |
 | Pool analytics / SilvEx integration | Planned verified API adapters | No live integration is claimed |
 
 All research responses state the external source, retrieval timestamp and stale
@@ -30,7 +33,7 @@ in the **local environment**; never add credentials to tracked files.
 
 ```sh
 export BTCS_NETWORK=main
-export BTCS_RPC_URL=http://127.0.0.1:10567
+export BTCS_RPC_URL=http://127.0.0.1:10566
 # Provide BTCS_RPC_USER and BTCS_RPC_PASSWORD privately from your node config
 export SILVERSCAN_DB="$PWD/silverscan.db"
 python3 -m app.indexer --max-blocks 100
@@ -82,12 +85,50 @@ python3 -m pytest -q tests/test_market_data.py tests/test_indexer_canonical.py t
 node --test tests/test_static_ui.test.mjs
 node --check app/static/explorer.js
 node --check app/static/research.js
+node --check app/static/charts.js
 python3 -m compileall -q app tests
 ```
 
 The new `tests/test_market_data.py` suite uses mocked provider responses and
 does not make live HTTP requests. Those tests do not prove remote uptime,
 provider coverage or live production readiness.
+
+## Price charts, graphics, and Fear & Greed
+
+The market-first Silver Scan UI includes a responsive top-100 research table,
+true 7-day coin sparklines, real coin profile pages with five selectable price
+history ranges, global market totals, gainers/losers, a dominance ring for
+Bitcoin/Ethereum/other shares, and a Fear & Greed gauge with a historical line
+chart. All graphics are **original SVG/CSS components** rendered using numeric
+observations from supported providers; no CoinMarketCap/CoinGecko site charts
+or branded graphics are copied.
+
+Data sources and separate availability requirements:
+
+- **CoinGecko:** coin markets, icons, asset profiles, historical USD price
+  charts and global market capitalization/dominance. The public API may be
+  rate-limited; some historical periods require a provider plan. Add optional
+  `COINGECKO_DEMO_API_KEY` to the private server environment only.
+- **Alternative.me:** external Crypto Fear & Greed Index, current score and
+  up to 30 days of history. This is not the proprietary CoinMarketCap Fear &
+  Greed indicator. Its source is displayed alongside the graphic, with a
+  direct attribution link as required by the data provider.
+- **DEX Screener:** external observed pairs and market data; never imply a
+  verified token or a SilvEx exchange listing.
+- **BTCS Core RPC:** network mining fields and L1 indexer data, not an
+  independent pool-miner directory or a node consensus proof.
+
+If upstream data fails, the UI displays unavailable/stale status instead of
+inventing prices, hashrates, exchange volume, fear scores or trends. The
+global top bar may show unavailable values while the separate market provider
+is reachable. Chart and source timestamps belong to the underlying API
+responses; this is not a real-time exchange trading terminal.
+
+**Preview update:** If the existing `http://127.0.0.1:8100` preview is from
+an earlier detached Git worktree, it will not update automatically when this
+branch changes. Fetch pull request 1 and start a **new** isolated worktree on
+a different port, while preserving the original files. Use the instructions
+in the PR description to avoid overwriting any existing local work.
 
 ## Data sourcing & operational boundaries
 
