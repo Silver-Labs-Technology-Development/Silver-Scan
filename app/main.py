@@ -24,6 +24,10 @@ class Handler(BaseHTTPRequestHandler):
             if path == "/":
                 with open(os.path.join(os.path.dirname(__file__), "static", "index.html")) as f:
                     self._send(200, f.read(), "text/html"); return
+            if path == "/research.js":
+                with open(os.path.join(os.path.dirname(__file__), "static", "research.js"), encoding="utf-8") as f:
+                    self._send(200, f.read(), "application/javascript; charset=utf-8")
+                return
             if path == "/api/networks":
                 self._send(200, json.dumps([n.to_dict() for n in A.NETWORKS])); return
             if path == "/api/markets":
