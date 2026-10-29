@@ -130,7 +130,7 @@ class Handler(BaseHTTPRequestHandler):
             return
         if path == "/api/catalog/page":
             self._send(200, C.cg_market_page(
-                self._query_int(query, "page", 1, 1, 100),
+                self._query_int(query, "page", 1, 1, 500),
                 self._query_int(query, "limit", 100, 1, 250)))
             return
         if path == "/api/asset/quote":
