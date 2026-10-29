@@ -1,18 +1,40 @@
 # SilverScan — Silver Labs Explorer & Research Terminal
 
-**Development prototype — not a hosted, complete or audited market service.**
+**Development prototype with a release-ready public viewing alpha branch. Live Cloudflare hosting must be verified in the Pages dashboard before announcing a URL.**
 
 SilverScan is an independent Silver Labs product, separate from any explorer
 owned by the Bitcoin Silver organization. It combines a BTCS L1 block explorer
 prototype with a developing multi-coin market research terminal.
+
+## Cloudflare public viewing alpha
+
+The intended Cloudflare Pages production branch is **`public-alpha`**,
+separate from the actively developed GitHub PR branch. The site is static
+HTML/CSS/JavaScript with a narrow Cloudflare Pages Function in
+[`app/static/_worker.js`](app/static/_worker.js); **it does not run the
+local Python account database or node RPC backend**.
+
+- Read [Cloudflare deployment instructions](docs/CLOUDFLARE-ALPHA.md) for
+  correct Git connection, `app/static` output directory, attribution,
+  optional approved provider secrets, Cloudflare Web Analytics and final
+  external HTTPS verification.
+- The full user account login/portfolio backend remains local-only;
+  browser-local Coin Watch stars can still work on a public static site.
+- Market feed access requires the appropriate commercial license and
+  Cloudflare-secret provider key; incomplete endpoints show an honest
+  unavailable state rather than fabricated results.
+- External mining data, payouts, DEX trading, wallet signing and unguarded
+  blockchain RPC are not enabled on a viewing alpha.
+- A successful GitHub push/CI check is **not proof of public Cloudflare
+  deployment**. Only a verified external HTTPS deployment counts as live.
 
 ## Capabilities in this branch
 
 | Section | Implementation | Important limitation |
 |---|---|---|
 | BTCS L1 Explorer | Python RPC block/transaction lookup, address views, SQLite indexing | Local prototype; partial indexing and reorg gaps; not a canonical proof |
-| Markets & Graphs | CoinGecko global market summary, ranks, prices, supply, external volume, 1h/24h/7d changes and live-provider mini-charts | First 100 provider assets; third-party data and rate limits; not chain-verified |
-| Coin Watch | Watch/unwatch provider IDs saved in the browser | No login, cloud sync or alerts; display limited to top-100 market snapshot |
+| Markets & Graphs | Ranked CoinGecko/CMC/LiveCoinWatch backend adapters with 25/50/100/200 per page and source-attributed charts | Availability depends on approved provider access and commercial permissions; never claim a merged 22k active-asset index |
+| Coin Watch & Manual Portfolio | Browser-local starred IDs, catalog search and a local-only password-backed manual holdings prototype | Public alpha has no account registration or synchronized portfolios; no holdings are verified from wallet balances |
 | Coin Profile & Price Charts | Provider-backed asset profile, contract references, price history for 24h/7d/30d/90d/1y where API plans permit | Historical coverage varies by provider and API plan; missing history is shown as unavailable |
 | Sentiment & Dominance | Alternative.me Crypto Fear & Greed score/history and CoinGecko BTC/ETH market-cap dominance graphic | Market-level reference data, not coin-specific sentiment or buy/sell advice |
 | DEX Scan | DEX Screener token/pair search with chain, pair and token contract identity | External research only, no SilvEx listing, trade or swap |
