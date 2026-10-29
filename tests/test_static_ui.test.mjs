@@ -7,20 +7,28 @@ const css = readFileSync('app/static/styles.css', 'utf8')
 const explorer = readFileSync('app/static/explorer.js', 'utf8')
 const research = readFileSync('app/static/research.js', 'utf8')
 
-test('SilverScan has distinct in-depth market, watch, news and mining destinations', () => {
-  for (const tab of ['explorer','markets','dex','heatmap']) {
-    assert.match(page, new RegExp('data-tab="' + tab + '"'))
+test('SilverScan shares a consistent navigation shell across all visible pages',()=>{
+  const shell=readFileSync('app/static/site-shell.js','utf8');
+  const shellCSS=readFileSync('app/static/site-shell.css','utf8');
+  const files=['index.html','coin-watch.html','news.html','mining.html','insights.html','compare.html','universal-explorer.html','features.html','feature-detail.html'];
+  for(const name of files){
+    const content=readFileSync('app/static/'+name,'utf8');
+    assert.match(content,/src="\.\/site-shell\.js"/);
+    assert.match(content,/href="\.\/site-shell\.css"/);
+    assert.match(content,/<header class="site-header" role="banner"><\/header>/);
   }
-  for (const id of ['explorer-search','view','research-view','net']) {
-    assert.match(page, new RegExp('id="' + id + '"'))
+  for(const route of ['coin-watch.html','universal-explorer.html','mining.html','news.html','insights.html','compare.html','features.html']){
+    assert.ok(shell.includes(route));
   }
-  assert.match(page, /Silver Labs/i)
-  assert.match(page, /not SilvEx trades/i)
-  assert.match(page, /href="\.\/features\.html"/)
-  assert.match(page, /href="\.\/coin-watch\.html"/)
-  assert.match(page, /href="\.\/news\.html"/)
-  assert.match(page, /href="\.\/mining\.html"/)
-})
+  assert.match(shell,/id="theme-toggle"/);
+  assert.match(shell,/id="ss-mobile-toggle"/);
+  assert.match(shell,/ss-nav-dropdown/);
+  assert.match(shell,/aria-expanded/);
+  assert.match(shellCSS,/@media\(max-width:970px\)/);
+  assert.match(page,/Silver Labs/i);
+  assert.match(page,/not SilvEx trades/i);
+  for(const id of ['explorer-search','view','research-view','net'])assert.ok(page.includes('id="'+id+'"'));
+});
 
 test('research modules are external; untrusted block fields never become HTML templates', () => {
   assert.doesNotMatch(page, /<script>\s*[\s\S]*?<\/script>/)
@@ -37,7 +45,7 @@ test('responsive and accessible visual foundation', () => {
   assert.match(page, /<html lang="en">/)
   assert.match(page, /name="viewport"/)
   assert.match(page, /class="skip-link"/)
-  assert.match(page, /aria-label="SilverScan sections"/)
+  assert.match(readFileSync('app/static/site-shell.js','utf8'), /aria-label="SilverScan primary navigation"/)
   assert.match(page, /aria-live="polite"/)
   assert.match(css, /@media\(max-width:700px\)/)
   assert.match(css, /@media\(prefers-reduced-motion:reduce\)/)
@@ -66,11 +74,11 @@ test('Coin Watch combines catalog discovery with saved coins, separate news and 
   for(const html of [watch,news,mining]){
     assert.match(html,/src="\.\/data-hub\.js"/);
     assert.match(html,/href="\.\/theme\.css"/);
-    assert.match(html,/id="theme-toggle"/);
-    assert.match(html,/SILVER<span>SCAN/);
-    assert.match(html,/href="\.\/news\.html"/);
-    assert.match(html,/href="\.\/mining\.html"/);
-    assert.match(html,/href="\.\/coin-watch\.html"/);
+    assert.match(html,/src="\.\/site-shell\.js"/);
+    assert.match(readFileSync("app/static/site-shell.js","utf8"),/SILVER<span>SCAN/);
+    assert.match(readFileSync("app/static/site-shell.js","utf8"),/href="\.\/news\.html"/);
+    assert.match(readFileSync("app/static/site-shell.js","utf8"),/href="\.\/mining\.html"/);
+    assert.match(readFileSync("app/static/site-shell.js","utf8"),/href="\.\/coin-watch\.html"/);
   }
   assert.match(watch,/id="watch-results"/);
   assert.match(watch,/id="asset-search"/);
@@ -175,4 +183,22 @@ test('every planned feature leads to a meaningful integration outline',()=>{
   assert.match(script,/DOMParser/);
   assert.match(script,/textContent/);
   assert.doesNotMatch(script,/innerHTML\s*=/);
+});
+
+
+test('keyless CoinLore default and compact source-status panel replace blank alpha markets',()=>{
+  const shell=readFileSync('app/static/site-shell.js','utf8');
+  const theme=readFileSync('app/static/site-shell.css','utf8');
+  const watch=readFileSync('app/static/coin-watch.html','utf8');
+  assert.match(research,/marketProvider:'lore'/);
+  assert.match(research,/\/api\/coinlore\/markets/);
+  assert.match(research,/function openLoreAsset/);
+  assert.match(page,/id="ss-source-details"/);
+  assert.match(page,/id="sources-status"/);
+  assert.doesNotMatch(page,/class="provider-board"/);
+  assert.match(theme,/\.ss-sources-popover/);
+  assert.match(watch,/value="lore" selected/);
+  assert.match(readFileSync('app/static/data-hub.js','utf8'),/\/api\/coinlore\/search/);
+  assert.match(readFileSync('app/static/data-hub.js','utf8'),/\/api\/coinlore\/quotes/);
+  assert.match(shell,/More Research/);
 });
