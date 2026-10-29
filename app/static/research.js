@@ -1,4 +1,4 @@
-/* Silver Scan market workspace.
+/* SilverScan market workspace.
  * All displayed numbers come from named upstream providers. DOM is assembled
  * using textContent, not injected HTML. No coin listing implies endorsement.
  */
@@ -272,7 +272,7 @@ function buildMarketTable(){
   const prev=button('← Previous',()=>{if(state.marketPage>0){state.marketPage--;loadMarket(true);}});
   prev.disabled=state.marketPage===0||state.marketLoading;
   const next=button('Next →',()=>{if(state.marketHasMore){state.marketPage++;loadMarket(true);}});
-  next.disabled=!state.marketHasMore||state.marketLoading||state.marketPage>=99;
+  next.disabled=!state.marketHasMore||state.marketLoading||state.marketPage>=499;
   pagination.append(prev,el('span','Provider page '+(state.marketPage+1)),next);
   footer.append(pagination);holder.append(footer);
   return holder;
@@ -461,7 +461,7 @@ async function renderMining(){
   display(sectionHeading('Mining & Pool Statistics','Node-provided BTCS network metrics. Other mining networks need their own independently verified adapters.'),el('p','Checking connected BTCS node…','loading-panel'));
   const header=sectionHeading('Bitcoin Silver · BTCS','Featured mining network · network data is not Silver Pool operator statistics.');
   const learn=panel('featured-panel',el('h3','Compare mining pools'),el('p','MiningPoolStats is an external directory. Its listed pools and rankings are independent of Silver Labs.','research-note'),link('https://miningpoolstats.stream/bitcoinsilver','View BTCS on MiningPoolStats'));
-  const infoPanel=panel('',el('h3','Mining coverage'),el('p','Silver Scan can add independently verified per-chain and per-pool adapters. Cataloging coins does not mean their mining services or data feeds are operational.','research-note'));
+  const infoPanel=panel('',el('h3','Mining coverage'),el('p','SilverScan can add independently verified per-chain and per-pool adapters. Cataloging coins does not mean their mining services or data feeds are operational.','research-note'));
   try{
     const d=await fetchJson('/api/mining/overview');
     const grid=wrap('mining-grid',
