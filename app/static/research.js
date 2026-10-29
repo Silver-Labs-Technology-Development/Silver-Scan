@@ -10,8 +10,7 @@ const WATCH_KEY='silver-scan-coin-watch-v1',THEME_KEY='silver-scan-theme-v1';
 const moneyFmt=new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:2});
 const compactFmt=new Intl.NumberFormat('en-US',{notation:'compact',maximumFractionDigits:2});
 const numberFmt=new Intl.NumberFormat('en-US',{maximumFractionDigits:0});
-const state={tab:'markets',market:null,global:null,sentiment:null,sort:'rank',direction:1,query:'',page:0,selected:null};
-const perPage=25;
+const state={tab:'markets',market:null,heatmap:null,global:null,sentiment:null,sort:'rank',direction:1,query:'',marketPage:0,marketPageSize:50,marketHasMore:false,marketLoading:false,marketSeq:0,selected:null};
 function el(tag,text=null,cls=''){
   const item=document.createElement(tag);if(text!==null&&text!==undefined)item.textContent=String(text);
   if(cls)item.className=cls;return item;
@@ -99,8 +98,10 @@ function setupTheme(){
   $('theme-toggle').addEventListener('click',()=>setTheme(document.documentElement.dataset.theme==='dark'?'light':'dark'));
 }
 function switchTab(tab){
+  if(tab==='watch'){location.href='./coin-watch.html';return;}
+  if(tab==='mining'){location.href='./mining.html';return;}
   if(!titles[tab])tab='markets';
-  state.tab=tab;state.selected=null;state.page=0;
+  state.tab=tab;state.selected=null;
   for(const item of tabs){
     const selected=item.dataset.tab===tab;
     item.classList.toggle('selected',selected);item.setAttribute('aria-pressed',String(selected));
@@ -152,7 +153,7 @@ function marketHighlights(){
   const out=wrap('top-highlights');
   for(const [title,list] of [['Top Gainers',movers.slice(0,3)],['Top Losers',movers.slice(-3).reverse()]]){
     const body=panel('highlight-panel');
-    body.append(wrap('panel-head',el('h3',title),el('span','TOP 100 SNAPSHOT','tiny-label')));
+    body.append(wrap('panel-head',el('h3',title),el('span','CURRENT PROVIDER PAGE','tiny-label')));
     const ol=el('ol',null,'highlight-list');
     list.forEach((coin,i)=>{
       const row=el('li',null,'highlight-row');
@@ -165,7 +166,7 @@ function marketHighlights(){
   const feature=panel('highlight-panel featured-panel');
   feature.append(wrap('panel-head',el('h3','Featured network'),el('span','SILVER LABS','featured-label')));
   feature.append(el('h2','Bitcoin Silver · BTCS'),el('p','Discover BTCS L1 chain activity and network mining information. Market data availability is independent of node connectivity.'));
-  feature.append(button('View BTCS mining data',()=>switchTab('mining'),'featured-cta'));
+  feature.append(button('View BTCS mining data',()=>{location.href='./mining.html';},'featured-cta'));
   out.append(feature);
   return out;
 }
@@ -216,17 +217,12 @@ function tableCoinRows(coins){
 }
 function filtered(){
   let coins=[...(state.market?.assets||[])];
-  if(state.tab==='watch'){
-    const watched=new Set(watchIds());
-    coins=coins.filter(coin=>watched.has(coin.id));
-  }
   const q=state.query.trim().toLowerCase();
   if(q)coins=coins.filter(c=>(c.name||'').toLowerCase().includes(q)||(c.symbol||'').toLowerCase().includes(q)||(c.provider_id||'').includes(q));
   const key={rank:'rank',price:'price_usd',change:'change_24h_pct',cap:'market_cap_usd',volume:'volume_24h_usd'}[state.sort]||'rank';
   coins.sort((a,b)=>{
     const x=a[key],y=b[key];
-    if(x==null&&y==null)return 0;
-    if(x==null)return 1;if(y==null)return -1;
+    if(x==null&&y==null)return 0;if(x==null)return 1;if(y==null)return -1;
     return (x-y)*state.direction;
   });
   return coins;
@@ -234,79 +230,91 @@ function filtered(){
 function paintTable(){
   if(!state.market)return;
   const existing=$('markets-table-section');
-  if(!existing)return;
-  const box=buildMarketTable();
-  existing.replaceWith(box);
+  if(existing)existing.replaceWith(buildMarketTable());
 }
 function buildMarketTable(){
-  const coins=filtered();const pages=Math.max(1,Math.ceil(coins.length/perPage));
-  state.page=Math.min(state.page,pages-1);
-  const shown=coins.slice(state.page*perPage,(state.page+1)*perPage);
-  const holder=panel('panel-tight');holder.id='markets-table-section';
-  const title=wrap('',el('h2',state.tab==='watch'?'Your watched cryptocurrencies':'All Cryptocurrencies'));
-  title.append(el('p','Provider-ranked top 100 snapshot · filter and sort currently loaded assets','research-note'));
-  const search=el('input');search.type='search';search.placeholder='Filter name or ticker';search.value=state.query;
-  search.setAttribute('aria-label','Filter current coin list');
-  const sort=el('select');sort.setAttribute('aria-label','Sort cryptocurrency table');
-  const options=[['rank','Market cap rank'],['cap','Market capitalization'],['price','Coin price'],['change','24h price change'],['volume','24h volume']];
-  options.forEach(([value,name])=>{const item=el('option',name);item.value=value;sort.append(item);});
-  sort.value=state.sort;
-  const direction=button(state.direction===1?'Ascending ↑':'Descending ↓',()=>{state.direction*=-1;state.page=0;paintTable();},'tab-button');
-  const controls=wrap('toolbar-controls',search,sort,direction);
-  search.addEventListener('input',()=>{
-    state.query=search.value;state.page=0;
-    // Only the table needs replacement; retain focus after filtering.
-    const start=search.selectionStart;
-    paintTable();
-    const next=document.querySelector('#markets-table-section input');
-    if(next){next.focus();try{next.setSelectionRange(start,start);}catch{}}
+  const shown=filtered(),holder=panel('panel-tight');
+  holder.id='markets-table-section';
+  const title=wrap('',el('h2','Cryptocurrencies by Market Cap'));
+  title.append(el('p','CoinGecko active market observations, ranked by provider across multiple pages. Search locally within this page or use Coin Watch to find any provider ID.','research-note'));
+  const search=el('input');search.type='search';search.placeholder='Filter current provider page';search.value=state.query;
+  search.setAttribute('aria-label','Filter loaded provider page');
+  const sort=el('select');sort.setAttribute('aria-label','Sort currently loaded coins');
+  [['rank','Market cap rank'],['cap','Market capitalization'],['price','Coin price'],['change','24h price change'],['volume','24h volume']].forEach(([v,name])=>{
+    const item=el('option',name);item.value=v;sort.append(item);
   });
-  sort.addEventListener('change',()=>{state.sort=sort.value;state.page=0;paintTable();});
+  sort.value=state.sort;
+  const size=el('select');size.setAttribute('aria-label','Coins per page');size.id='market-page-size';
+  [25,50,100,200].forEach(num=>{
+    const item=el('option',num+' coins per page');item.value=String(num);size.append(item);
+  });
+  size.value=String(state.marketPageSize);
+  const direction=button(state.direction===1?'Ascending ↑':'Descending ↓',()=>{state.direction*=-1;paintTable();},'tab-button');
+  const controls=wrap('toolbar-controls',search,sort,size,direction);
+  size.addEventListener('change',()=>{
+    state.marketPageSize=Number(size.value);state.marketPage=0;loadMarket(true);
+  });
+  search.addEventListener('input',()=>{
+    state.query=search.value;
+    const pos=search.selectionStart;paintTable();
+    const next=$('markets-table-section')?.querySelector('input');
+    if(next){next.focus();try{next.setSelectionRange(pos,pos);}catch{}}
+  });
+  sort.addEventListener('change',()=>{state.sort=sort.value;paintTable();});
   holder.append(wrap('table-toolbar',title,controls));
-  const table=el('table',null,'market-table');
-  const head=el('thead');const tr=el('tr');
+  const table=el('table',null,'market-table'),head=el('thead'),tr=el('tr');
   ['#','Coin','Price','1h %','24h %','7d %','Market cap','24h volume','Circulating supply','Last 7 days','Watch'].forEach(name=>tr.append(el('th',name)));
   head.append(tr);table.append(head,tableCoinRows(shown));
   holder.append(wrap('table-scroll',table));
-  if(!shown.length)holder.append(el('p',state.tab==='watch'?'No watched coins in the provider top-100 snapshot. Watch assets with the star icon.':'No assets matched your filter.','empty-panel'));
-  const footer=wrap('table-footer',el('span','Showing '+(shown.length?state.page*perPage+1:0)+'–'+(state.page*perPage+shown.length)+' of '+coins.length+' visible assets'));
+  if(!shown.length)holder.append(el('p','No source-backed active-market rows matched this provider page. Try another page or search Coin Watch.','empty-panel'));
+  const footer=wrap('table-footer',el('span',shown.length+' visible assets on provider page '+(state.marketPage+1)+' · Total active market count not verified'));
   const pagination=wrap('pagination');
-  const prev=button('Previous',()=>{state.page--;paintTable();});
-  prev.disabled=state.page===0;
-  const next=button('Next',()=>{state.page++;paintTable();});
-  next.disabled=state.page>=pages-1;
-  pagination.append(prev,el('span','Page '+(state.page+1)+' / '+pages),next);
+  const prev=button('← Previous',()=>{if(state.marketPage>0){state.marketPage--;loadMarket(true);}});
+  prev.disabled=state.marketPage===0||state.marketLoading;
+  const next=button('Next →',()=>{if(state.marketHasMore){state.marketPage++;loadMarket(true);}});
+  next.disabled=!state.marketHasMore||state.marketLoading||state.marketPage>=99;
+  pagination.append(prev,el('span','Provider page '+(state.marketPage+1)),next);
   footer.append(pagination);holder.append(footer);
   return holder;
 }
 function renderMarketHome(){
-  if(!state.market)return;
-  const title=sectionHeading(state.tab==='watch'?'Your Coin Watch':'Crypto Market Overview',state.tab==='watch'?'Browser-local watchlist, updated with current provider data.':'Rankings, real provider sparklines, sentiment and market breadth.');
-  const nodes=[title];
-  if(state.tab==='markets'){
+  if(!state.market||state.tab!=='markets'||state.selected)return;
+  const nodes=[sectionHeading('Crypto Market Overview','Navigate market-cap ranks across pages of 25, 50, 100 or 200 assets, using live provider observations.')];
+  if(state.marketPage===0){
     const highlights=marketHighlights();if(highlights)nodes.push(highlights);
     nodes.push(sectionHeading('Market Intelligence','Independent sources, explicitly identified.'));
     nodes.push(wrap('visualization-grid',dominanceCard(),sentimentCard()));
   }
-  nodes.push(buildMarketTable(),source(state.market),el('p','Market snapshots are not complete exchange listings. The symbol of a coin is not a verified contract or network identifier.','research-note'));
+  nodes.push(buildMarketTable(),source(state.market),
+    el('p','Only assets with a provider-reported positive price and 24-hour trading volume appear on market pages. Other discoverable assets remain available through Coin Watch.','research-note'));
   display(...nodes);
 }
-async function loadMarket(){
-  if(state.market){
-    status(state.market.stale?'Showing stale market snapshot':'CoinGecko market snapshot',state.market);
+async function loadMarket(force=false){
+  if(state.market&&!force){
+    status(state.market.stale?'Showing stale market snapshot':'CoinGecko market page',state.market);
     renderMarketHome();return;
   }
-  display(el('p','Loading cryptocurrency market data and real charts…','loading-panel'));
+  const request=++state.marketSeq;
+  state.marketLoading=true;
+  display(el('p','Loading market-cap page '+(state.marketPage+1)+' ('+state.marketPageSize+' per page)…','loading-panel'));
   try{
-    const data=await fetchJson('/api/markets?limit=100');
-    if(!Array.isArray(data.assets))throw Error('Market provider returned an invalid asset list');
-    state.market=data;
-    status(data.stale?'STALE: provider response cached':'CoinGecko market snapshot',data);
+    const data=await fetchJson('/api/catalog/page?page='+(state.marketPage+1)+'&limit='+state.marketPageSize);
+    if(request!==state.marketSeq)return;
+    if(!Array.isArray(data.assets))throw Error('Market provider returned an invalid list');
+    state.market=data;state.marketHasMore=data.has_more===true;
+    state.query='';state.marketLoading=false;
+    status(data.stale?'STALE: source observation cached':'CoinGecko market page',data);
     renderMarketHome();
-  }catch(error){status('Market source unavailable');display(errorMessage(error.message+' · No illustrative market numbers will be shown.'));}
+  }catch(error){
+    if(request!==state.marketSeq)return;
+    state.marketLoading=false;
+    status('Market source unavailable');
+    display(errorMessage(error.message+' · No illustrative market numbers will be shown. Retry when the provider is reachable.'),
+      button('Retry market page',()=>loadMarket(true),'tab-button'));
+  }
 }
 function renderHeatmap(){
-  const data=state.market;
+  const data=state.heatmap;
   if(!data||!Array.isArray(data.assets)){
     display(errorMessage('Coin performance heatmap is unavailable until a market data provider responds.'));
     return;
@@ -340,15 +348,15 @@ function renderHeatmap(){
     el('p','Data coverage is limited to the selected provider top-100 snapshot, with only coins that have a reported market cap and percentage change. Tile area is illustrative of relative rank, not an exact treemap.','research-note'));
 }
 async function loadHeatmap(){
-  if(state.market){
-    status(state.market.stale?'STALE market snapshot':'Provider-backed heatmap',state.market);
+  if(state.heatmap){
+    status(state.heatmap.stale?'STALE market snapshot':'Provider-backed heatmap',state.heatmap);
     renderHeatmap();return;
   }
   display(el('p','Loading source-backed market performance heatmap…','loading-panel'));
   try{
     const data=await fetchJson('/api/markets?limit=100');
     if(!Array.isArray(data.assets))throw Error('Invalid market data');
-    state.market=data;
+    state.heatmap=data;
     status(data.stale?'STALE market snapshot':'Provider-backed heatmap',data);
     renderHeatmap();
   }catch(error){display(errorMessage('Heatmap unavailable: '+error.message));}
@@ -476,7 +484,7 @@ function bindSearch(){
     const term=state.query.toLowerCase();
     const matches=state.market?.assets?.some(c=>(c.name||'').toLowerCase().includes(term)||(c.symbol||'').toLowerCase().includes(term));
     if(state.query.length>=2&&!matches){
-      location.href='./data-hub.html?search='+encodeURIComponent(state.query)+'#universe';
+      location.href='./coin-watch.html?search='+encodeURIComponent(state.query);
       return;
     }
     if(state.tab!=='markets'&&state.tab!=='watch')switchTab('markets');
