@@ -7,7 +7,7 @@ alpha into the existing Worker rather than creating a new site.
 ## Repository release source
 
 - GitHub repository: `Silver-Labs-Technology-Development/Silver-Scan`.
-- Production release branch: `public-alpha`.
+- Canonical production release branch: `main`.
 - Existing Cloudflare Worker name: `silver-scan`.
 - Production entrypoint: `app/static/_worker.js` (public read-only API).
 - Static assets directory: `app/static` (HTML, CSS, JS, images).
@@ -27,7 +27,7 @@ alpha into the existing Worker rather than creating a new site.
    Worker or overwrite existing domain/route settings.
 2. Connect the existing Worker to
    `Silver-Labs-Technology-Development/Silver-Scan` if not already connected.
-3. Under **Branch control** set the **production branch** to `public-alpha`.
+3. Under **Branch control** set the **production branch** to `main`.
    Only a release commit to this branch should trigger a production update.
    Development PR changes stay on separate branches.
 4. Set project/root directory to the **repository root** (if shown).
@@ -114,7 +114,7 @@ Do not present connector placeholders as operating providers.
 ## Developer workflow
 
 Keep work and experimental changes on the development PR branch.
-Publish only reviewed and tested versions on `public-alpha`. Cloudflare
+Publish only reviewed and tested versions on `main`. Cloudflare
 Workers Builds can then deploy each production-branch push automatically,
 with stable HTTPS hosting independent of the developer's computer.
 
