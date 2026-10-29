@@ -142,6 +142,11 @@ $('mining-form').addEventListener('submit',async event=>{
   }catch(e){out.replaceChildren(el('p','Cannot calculate: '+e.message,'hub-error'));}
 });
 loadNews();
+const initialQuery=new URLSearchParams(location.search).get('search');
+if(initialQuery&&initialQuery.trim().length>=2&&initialQuery.length<=70){
+  $('search-coins').value=initialQuery.trim();
+  loadUniverse({search:initialQuery.trim()});
+}
 if(location.hash==='#news'||location.hash==='#mining'||location.hash==='#pool-sources'){
   // The HTML anchor links target actual subsections in the document.
 }else{
