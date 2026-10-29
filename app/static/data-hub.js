@@ -156,19 +156,53 @@ $('btcs-fetch')?.addEventListener('click',async()=>{
       box('',el('small','24h change'),el('strong',pct(coin.change_24h_pct)))),meta(result));
   }catch(e){panel.replaceChildren(el('p','BTCS quote unavailable: '+e.message,'hub-error'));}
 });
+function newsCard(item){
+  const article=el('article',null,'hub-story');
+  // Only external article links from the validated publisher feed are shown.
+  const anchor=link(item.url,item.title||'Read original article');
+  anchor.className='hub-news-title';
+  const artwork=el('div',null,'hub-story-artwork');
+  const fallback=el('div',null,'hub-story-image-fallback');
+  fallback.append(el('span',(item.source||'NEWS').split(/\s+/).map(x=>x[0]).join('').slice(0,2).toUpperCase(),'hub-story-monogram'),el('small','PUBLISHER STORY'));
+  artwork.append(fallback);
+  if(typeof item.thumbnail_url==='string'&&item.thumbnail_url.startsWith('https://')){
+    const img=document.createElement('img');
+    img.src=item.thumbnail_url;
+    img.alt=''; // Decorative article media; the real article title is adjacent.
+    img.loading='lazy';img.decoding='async';img.referrerPolicy='no-referrer';
+    img.addEventListener('load',()=>artwork.classList.add('image-ready'));
+    img.addEventListener('error',()=>img.remove());
+    artwork.append(img);
+  }
+  const artworkLink=link(item.url,'');
+  artworkLink.className='hub-story-art-link';
+  artworkLink.setAttribute('aria-label','Read '+(item.title||'article')+' at '+(item.source||'original publisher'));
+  artworkLink.append(artwork);
+  const sourceRow=el('div',null,'hub-story-byline');
+  const faviconWrap=el('span',null,'hub-favicon-wrap');
+  faviconWrap.append(el('span',(item.source||'N').slice(0,1),'hub-favicon-fallback'));
+  if(typeof item.favicon_url==='string'&&item.favicon_url.startsWith('https://')){
+    const favicon=document.createElement('img');
+    favicon.src=item.favicon_url;favicon.alt='';favicon.loading='lazy';
+    favicon.referrerPolicy='no-referrer';
+    favicon.addEventListener('load',()=>faviconWrap.classList.add('icon-ready'));
+    favicon.addEventListener('error',()=>favicon.remove());
+    faviconWrap.append(favicon);
+  }
+  sourceRow.append(faviconWrap,el('span',item.source||'Publisher','hub-news-source'));
+  const body=el('div',null,'hub-story-body');
+  const timestamp=item.published_at?new Date(item.published_at*1000).toLocaleString():'Publisher date unavailable';
+  body.append(sourceRow,anchor,el('small',timestamp,'hub-news-date'));
+  article.append(artworkLink,body);
+  return article;
+}
 async function loadNews(){
-  const panel=$('news-results');panel.replaceChildren(el('p','Checking source RSS headlines…','hub-note'));
+  const panel=$('news-results');if(!panel)return;
+  panel.replaceChildren(el('p','Loading publisher-provided headlines and imagery…','hub-note'));
   try{
     const data=await get('/api/news?limit=30');
     const stories=(data.articles||[]).slice(0,30);
-    const nodes=stories.map(item=>{
-      const article=el('article',null,'hub-story');
-      const category=el('span',item.source||'Publisher','hub-news-source');
-      const title=link(item.url,item.title||'Read original article');
-      title.className='hub-news-title';
-      const time=item.published_at?new Date(item.published_at*1000).toLocaleString():'Publication time not supplied';
-      article.append(category,title,el('small',time));return article;
-    });
+    const nodes=stories.map(newsCard);
     panel.replaceChildren(...(nodes.length?nodes:[el('p','No verified publisher headlines returned.','hub-note')]),meta(data));
   }catch(e){panel.replaceChildren(el('p','News sources unavailable: '+e.message,'hub-error'));}
 }
