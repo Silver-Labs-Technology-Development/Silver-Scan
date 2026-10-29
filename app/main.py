@@ -25,6 +25,7 @@ from app import accounts as U
 from app import pool_market as PM
 from app import livecoinwatch as LCW
 from app import source_status as SS
+from app import universal_explorer as UE
 
 STATIC = Path(__file__).resolve().parent / "static"
 HEX_HASH = re.compile(r"^[0-9a-fA-F]{64}$")
@@ -136,6 +137,12 @@ class Handler(BaseHTTPRequestHandler):
         if path in ("/", "/index.html"):
             self._static("index.html", "text/html; charset=utf-8")
             return
+        if path == "/universal-explorer.html":
+            self._static("universal-explorer.html", "text/html; charset=utf-8")
+            return
+        if path == "/universal-explorer.js":
+            self._static("universal-explorer.js", "application/javascript; charset=utf-8")
+            return
         if path == "/feature-detail.html":
             self._static("feature-detail.html", "text/html; charset=utf-8")
             return
@@ -216,6 +223,15 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/api/catalog/search":
             self._send(200, C.cg_catalog_search((query.get("q") or [""])[0],
                 self._query_int(query, "limit", 20, 1, 40)))
+            return
+        if path == "/api/universal/networks":
+            self._send(200, UE.networks())
+            return
+        if path == "/api/universal/search":
+            network=(query.get("network") or [""])[0]
+            value=(query.get("q") or [""])[0]
+            kind=(query.get("kind") or ["auto"])[0]
+            self._send(200, UE.lookup(network,value,kind))
             return
         if path == "/api/sources/status":
             self._send(200, SS.providers())
