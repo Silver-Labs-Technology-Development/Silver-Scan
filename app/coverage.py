@@ -141,8 +141,8 @@ def cg_catalog_search(query,limit=20):
 
 
 def cg_market_page(page=1,limit=100):
-    if type(page) is not int or not 1<=page<=100:
-        raise ValueError("page must be 1–100")
+    if type(page) is not int or not 1<=page<=500:
+        raise ValueError("page must be 1–500")
     if type(limit) is not int or not 1<=limit<=250:
         raise ValueError("limit must be 1–250")
     params=urlencode({"vs_currency":"usd","order":"market_cap_desc",
