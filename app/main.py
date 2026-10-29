@@ -22,6 +22,7 @@ from app import market_data as M
 from app import coverage as C
 from app import pool_registry as P
 from app import accounts as U
+from app import pool_market as PM
 
 STATIC = Path(__file__).resolve().parent / "static"
 HEX_HASH = re.compile(r"^[0-9a-fA-F]{64}$")
@@ -248,6 +249,18 @@ class Handler(BaseHTTPRequestHandler):
             return
         if path == "/api/insights/defi":
             self._send(200, C.cg_defi())
+            return
+        if path == "/api/pools/market":
+            self._send(200, PM.directory(
+                (query.get("coin") or ["all"])[0],
+                (query.get("sort") or ["score"])[0],
+                self._query_int(query, "limit", 100, 1, 200),
+                self._query_int(query, "offset", 0, 0, 2000)))
+            return
+        if path == "/api/exchanges/cmc":
+            self._send(200, C.cmc_exchange_map(
+                self._query_int(query, "page", 1, 1, 100),
+                self._query_int(query, "limit", 50, 1, 100)))
             return
         if path == "/api/mining/coins":
             self._send(200, P.public_coins())
