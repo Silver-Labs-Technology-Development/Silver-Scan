@@ -22,7 +22,7 @@ jobs:
       - name: Compile Python backend and tests
         run: python -m compileall -q app tests
       - name: Unit tests — market providers and reorg-safe indexing
-        run: python -m pytest -q tests/test_market_data.py tests/test_indexer_canonical.py
+        run: python -m pytest -q tests/test_market_data.py tests/test_indexer_canonical.py tests/test_http_api.py
       - name: Validate static browser scripts
         run: |
           node --check app/static/research.js
