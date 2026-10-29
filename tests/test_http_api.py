@@ -40,6 +40,22 @@ def api_server(tmp_path, monkeypatch):
     monkeypatch.setattr(market_data, "markets", lambda limit=50: {
         "source": "CoinGecko", "assets": [], "stale": False, "fetched_at": 1234,
     })
+    monkeypatch.setattr(market_data, "global_market", lambda: {
+        "source": "CoinGecko", "market_cap_usd": 123000,
+        "btc_dominance_pct": 50.0, "fetched_at": 1234,
+    })
+    monkeypatch.setattr(market_data, "market_sentiment", lambda days=30: {
+        "source": "Alternative.me Crypto Fear & Greed Index",
+        "score": 42, "classification": "Fear", "history": [],
+        "fetched_at": 1234,
+    })
+    monkeypatch.setattr(market_data, "asset_profile", lambda coin_id: {
+        "source": "CoinGecko", "provider_id": coin_id, "id": "coingecko:" + coin_id,
+    })
+    monkeypatch.setattr(market_data, "asset_chart", lambda coin_id, days: {
+        "source": "CoinGecko", "provider_id": coin_id, "days": days,
+        "points": [[1700000000000, 1.0], [1700000001000, 1.1]],
+    })
     monkeypatch.setattr(market_data, "dex_search", lambda query: {
         "source": "DEX Screener", "pairs": [], "stale": False, "fetched_at": 1234,
     })
@@ -75,6 +91,7 @@ def test_static_assets_are_served_and_safe(api_server):
         ("/styles.css", "text/css"),
         ("/explorer.js", "application/javascript"),
         ("/research.js", "application/javascript"),
+        ("/charts.js", "application/javascript"),
     ]:
         status, headers, body = request(api_server, path)
         assert status == 200
@@ -86,6 +103,7 @@ def test_static_assets_are_served_and_safe(api_server):
     assert b"explorer.js" in page
     assert b"research.js" in page
     assert "script-src 'self'" in headers["Content-Security-Policy"]
+    assert "coin-images.coingecko.com" in headers["Content-Security-Policy"]
 
 
 def test_index_writes_are_not_exposed_over_http(api_server):
@@ -144,3 +162,22 @@ def test_markets_and_dex_routes(api_server):
     assert status == 200 and markets["source"] == "CoinGecko"
     status, _, dex = data(api_server, "/api/dex/search?q=bitcoin")
     assert status == 200 and dex["source"] == "DEX Screener"
+
+
+
+def test_charts_sentiment_and_asset_profiles_use_source_backed_routes(api_server):
+    status, _, global_info = data(api_server, "/api/market/global")
+    assert status == 200 and global_info["source"] == "CoinGecko"
+    status, _, sentiment = data(api_server, "/api/market/sentiment?days=30")
+    assert status == 200 and sentiment["score"] == 42
+    assert "Alternative.me" in sentiment["source"]
+    status, _, profile = data(api_server, "/api/assets/profile?id=bitcoin")
+    assert status == 200 and profile["provider_id"] == "bitcoin"
+    status, _, chart = data(api_server, "/api/assets/chart?id=bitcoin&days=7")
+    assert status == 200 and len(chart["points"]) == 2
+    for path in [
+        "/api/market/sentiment?days=not-a-number",
+        "/api/assets/chart?id=bitcoin&days=900",
+    ]:
+        status, _, result = data(api_server, path)
+        assert status == 400 and "error" in result
