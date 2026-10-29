@@ -8,6 +8,9 @@ from __future__ import annotations
 
 import json
 import re
+import ipaddress
+from http.cookies import SimpleCookie
+from urllib.parse import urlsplit
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, unquote, urlsplit
@@ -18,6 +21,7 @@ from app import indexer as I
 from app import market_data as M
 from app import coverage as C
 from app import pool_registry as P
+from app import accounts as U
 
 STATIC = Path(__file__).resolve().parent / "static"
 HEX_HASH = re.compile(r"^[0-9a-fA-F]{64}$")
@@ -25,7 +29,7 @@ ADDRESS = re.compile(r"^[A-Za-z0-9]{20,128}$")
 
 
 class Handler(BaseHTTPRequestHandler):
-    def _send(self, status, body, content_type="application/json; charset=utf-8"):
+    def _send(self, status, body, content_type="application/json; charset=utf-8", cookie=None):
         if isinstance(body, (dict, list)):
             body = json.dumps(body, allow_nan=False)
         raw = body.encode("utf-8") if isinstance(body, str) else body
@@ -36,6 +40,8 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header("X-Content-Type-Options", "nosniff")
         self.send_header("Referrer-Policy", "no-referrer")
         self.send_header("X-Frame-Options", "DENY")
+        if cookie is not None:
+            self.send_header("Set-Cookie", cookie)
         if content_type.startswith("text/html"):
             self.send_header(
                 "Content-Security-Policy",
@@ -48,6 +54,55 @@ class Handler(BaseHTTPRequestHandler):
 
     def _error(self, status, message):
         self._send(status, {"error": message})
+
+    # All account APIs are intentionally loopback-only. Do not remove this
+    # safeguard to run behind a public reverse proxy without a security audit.
+    def _local_account_only(self):
+        try:
+            if not ipaddress.ip_address(self.client_address[0]).is_loopback:
+                raise PermissionError("Account preview is local-only")
+        except ValueError as exc:
+            raise PermissionError("Account preview is local-only") from exc
+
+    def _auth_token(self):
+        jar = SimpleCookie()
+        try:
+            jar.load(self.headers.get("Cookie", "")[:4096])
+            morsel = jar.get("ss_session")
+            return morsel.value if morsel else None
+        except Exception:
+            return None
+
+    def _current_user(self):
+        self._local_account_only()
+        return U.session(self._auth_token())
+
+    def _same_origin(self):
+        # Require same-origin JSON requests even for registration and login.
+        origin = self.headers.get("Origin", "")
+        host = self.headers.get("Host", "")
+        expected = "http://" + host
+        return origin == expected and host.split(":")[0] in ("127.0.0.1", "localhost", "[::1]")
+
+    def _json_body(self):
+        if not self._same_origin():
+            raise PermissionError("Same-origin account request required")
+        if self.headers.get("Content-Type", "").split(";")[0].strip().lower() != "application/json":
+            raise ValueError("Account requests require application/json")
+        raw_length = self.headers.get("Content-Length", "")
+        if not raw_length.isdecimal() or not 1 <= int(raw_length) <= 8192:
+            raise ValueError("Invalid account request size")
+        try:
+            value = json.loads(self.rfile.read(int(raw_length)))
+        except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+            raise ValueError("Invalid JSON request") from exc
+        if not isinstance(value, dict) or len(value) > 8:
+            raise ValueError("Invalid account payload")
+        return value
+
+    def _session_cookie(self, token, expires=604800):
+        # This is HTTP on a developer loopback server, never public hosting.
+        return "ss_session=" + token + "; Path=/; Max-Age=" + str(expires) + "; HttpOnly; SameSite=Strict"
 
     def _query_int(self, values, key, default, low, high):
         raw = (values.get(key) or [str(default)])[0]
@@ -127,6 +182,19 @@ class Handler(BaseHTTPRequestHandler):
             self._static("explorer.js", "application/javascript; charset=utf-8")
             return
 
+        if path == "/api/account/session":
+            token = self._auth_token()
+            user = self._current_user()
+            if not user:
+                self._send(200, {"authenticated": False, "local_preview_only": True})
+            else:
+                csrf = U.rotate_csrf(token, user)
+                self._send(200, {"authenticated": True, "email": user["email"],
+                                 "csrf": csrf, "local_preview_only": True})
+            return
+        if path == "/api/account/portfolio":
+            self._send(200, U.list_holdings(self._current_user()))
+            return
         if path == "/api/networks":
             self._send(200, [n.to_dict() for n in A.NETWORKS])
             return
@@ -311,6 +379,8 @@ class Handler(BaseHTTPRequestHandler):
         url = urlsplit(self.path)
         try:
             self._route(url.path, parse_qs(url.query, max_num_fields=12))
+        except PermissionError as exc:
+            self._error(401, str(exc))
         except ValueError as exc:
             self._error(400, str(exc))
         except M.ProviderUnavailable:
@@ -322,7 +392,61 @@ class Handler(BaseHTTPRequestHandler):
             self._error(500, "Internal Silver Scan error")
 
     def do_POST(self):
-        self._error(405, "Silver Scan HTTP API is read-only")
+        path = urlsplit(self.path).path
+        if path not in ("/api/account/register", "/api/account/login",
+                        "/api/account/logout", "/api/account/portfolio"):
+            self._error(405, "This operation is not available")
+            return
+        try:
+            self._local_account_only()
+            data = self._json_body()
+            if path in ("/api/account/register", "/api/account/login"):
+                action = U.register if path.endswith("register") else U.login
+                info = action(data.get("email"), data.get("password"),
+                              self.client_address[0])
+                self._send(200 if path.endswith("login") else 201,
+                           {"authenticated": True, "email": info["email"],
+                            "csrf": info["csrf"], "local_preview_only": True},
+                           cookie=self._session_cookie(info["session"]))
+                return
+            user = self._current_user()
+            csrf = self.headers.get("X-CSRF-Token", "")
+            if path == "/api/account/logout":
+                U.logout(self._auth_token(), user, csrf)
+                self._send(200, {"authenticated": False},
+                           cookie=self._session_cookie("", 0))
+                return
+            self._send(200, U.save_holding(user, csrf, data.get("asset_id"),
+                                          data.get("quantity")))
+        except U.AccountRateLimit as exc:
+            self._error(429, str(exc))
+        except PermissionError as exc:
+            self._error(403 if "CSRF" in str(exc) or "origin" in str(exc).lower()
+                        else 401, str(exc))
+        except (ValueError, U.AccountError) as exc:
+            self._error(400, str(exc))
+        except Exception:
+            self._error(500, "Account storage unavailable")
+
+    def do_DELETE(self):
+        path = urlsplit(self.path).path
+        if not path.startswith("/api/account/portfolio/"):
+            self._error(405, "This operation is not available")
+            return
+        try:
+            self._local_account_only()
+            if not self._same_origin():
+                raise PermissionError("Same-origin account request required")
+            user = self._current_user()
+            asset = unquote(path[len("/api/account/portfolio/"):])
+            U.delete_holding(user, self.headers.get("X-CSRF-Token", ""), asset)
+            self._send(200, {"deleted": True, "asset_id": asset})
+        except PermissionError as exc:
+            self._error(403, str(exc))
+        except (ValueError, U.AccountError) as exc:
+            self._error(400, str(exc))
+        except Exception:
+            self._error(500, "Account storage unavailable")
 
     def log_message(self, format, *args):
         pass
@@ -330,6 +454,7 @@ class Handler(BaseHTTPRequestHandler):
 
 def run():
     I.init_db()
+    U.init_db()
     httpd = ThreadingHTTPServer((config.HOST, config.PORT), Handler)
     print(f"Silver Scan development server running on http://{config.HOST}:{config.PORT}")
     httpd.serve_forever()
