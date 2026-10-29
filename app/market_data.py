@@ -341,3 +341,54 @@ def asset_chart(coin_id: str, days: int):
         "source": "CoinGecko", "fetched_at": fetched_at, "stale": stale,
         "provider_id": coin_id, "days": days, "currency": "USD", "points": points,
     }
+
+
+def market_sentiment(limit: int = 30):
+    """Alternative.me Fear & Greed: independently sourced, not a CMC score.
+
+    Attribution must be shown directly alongside the score and graph. Returns
+    an unavailable response through the API when source data cannot be read.
+    """
+    if type(limit) is not int or limit not in (7, 30, 90):
+        raise ValueError("sentiment history is limited to 7, 30 or 90 days")
+    url = "https://api.alternative.me/fng/?" + urlencode({"limit": limit})
+    raw, fetched_at, stale = _cached(
+        "fear-greed:" + str(limit),
+        lambda: _read_json(url),
+    )
+    rows = raw.get("data") if isinstance(raw, dict) else None
+    if not isinstance(rows, list) or not rows:
+        raise ProviderUnavailable("Fear and Greed provider returned no observations")
+    history = []
+    allowed = {"Extreme Fear", "Fear", "Neutral", "Greed", "Extreme Greed"}
+    for item in rows[:limit]:
+        if not isinstance(item, dict):
+            continue
+        try:
+            score = int(item.get("value"))
+            timestamp = int(item.get("timestamp"))
+        except (ValueError, TypeError):
+            continue
+        if not 0 <= score <= 100 or timestamp <= 0:
+            continue
+        cls = item.get("value_classification")
+        history.append({
+            "value": score,
+            "classification": cls if cls in allowed else "Unclassified",
+            "timestamp": timestamp,
+        })
+    if not history:
+        raise ProviderUnavailable("Fear and Greed observations are invalid")
+    history.sort(key=lambda item: item["timestamp"])
+    latest = history[-1]
+    return {
+        "source": "Alternative.me Crypto Fear & Greed Index",
+        "source_url": "https://alternative.me/crypto/fear-and-greed-index/",
+        "fetched_at": fetched_at,
+        "stale": stale,
+        "score": latest["value"],
+        "classification": latest["classification"],
+        "observation_timestamp": latest["timestamp"],
+        "history": history,
+        "note": "Market sentiment indicator, not coin-specific sentiment, investment advice, or a CoinMarketCap proprietary score.",
+    }
