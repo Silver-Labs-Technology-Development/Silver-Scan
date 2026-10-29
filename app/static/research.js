@@ -134,12 +134,12 @@ async function loadGlobal(){
     setText('metric-cap-change','Global market overview unavailable');
     setText('market-source-top','Market totals unavailable');
   }
-  if(state.market&&state.tab==='markets')renderMarketHome();
+  if(state.market&&state.tab==='markets'&&!state.selected)renderMarketHome();
 }
 async function loadSentiment(){
   try{state.sentiment=await fetchJson('/api/market/sentiment?days=30');}
   catch{state.sentiment=null;}
-  if(state.market&&state.tab==='markets')renderMarketHome();
+  if(state.market&&state.tab==='markets'&&!state.selected)renderMarketHome();
 }
 function panel(cls,...children){return wrap('panel '+cls,...children);}
 function sectionHeading(name,sub=''){return wrap('section-head',wrap('',el('h2',name),el('p',sub)));}
