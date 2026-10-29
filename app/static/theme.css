@@ -192,3 +192,11 @@ html[data-theme=dark] .site-footer a,html[data-theme=dark] .site-footer strong{c
 @media(max-width:1100px){.universal-network-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.universal-form{grid-template-columns:repeat(2,minmax(0,1fr))}.universal-form .universal-query{grid-column:1/-1}.universal-form>button{grid-column:1/-1}}
 @media(max-width:700px){.universal-network-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.universal-detail-list{grid-template-columns:1fr}}
 @media(max-width:490px){.universal-network-grid{grid-template-columns:1fr}.universal-form{grid-template-columns:1fr}.universal-form .universal-query,.universal-form>button{grid-column:auto}}
+
+/* Public Alpha branding, never obscure navigation and never fake completeness. */
+.public-alpha-banner{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:10px 15px;padding:12px 20px;background:#184567;color:#f1f9ff;border-bottom:1px solid #79b6db;font-size:12px;line-height:1.5;text-align:center}
+.public-alpha-banner strong{font-size:10px;letter-spacing:.12em;border:1px solid #a8dcfb;border-radius:20px;padding:4px 9px;color:#f8fbff}
+.public-alpha-banner span{max-width:1050px}
+html[data-theme=light] .public-alpha-banner{background:#dceffc;color:#103653;border-color:#729fbf}
+html[data-theme=light] .public-alpha-banner strong{color:#103653;border-color:#477d9f}
+.alpha-account-disabled{padding:15px;border:1px solid var(--line);border-left:4px solid var(--brand);background:var(--panel-alt);border-radius:7px;color:var(--text)!important}
