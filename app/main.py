@@ -16,6 +16,7 @@ from app import adapters as A
 from app import config
 from app import indexer as I
 from app import market_data as M
+from app import coverage as C
 
 STATIC = Path(__file__).resolve().parent / "static"
 HEX_HASH = re.compile(r"^[0-9a-fA-F]{64}$")
@@ -103,6 +104,37 @@ class Handler(BaseHTTPRequestHandler):
             return
         if path == "/api/markets":
             self._send(200, M.markets(self._query_int(query, "limit", 50, 1, 100)))
+            return
+        if path == "/api/catalog/search":
+            self._send(200, C.cg_catalog_search((query.get("q") or [""])[0],
+                self._query_int(query, "limit", 20, 1, 40)))
+            return
+        if path == "/api/catalog/page":
+            self._send(200, C.cg_market_page(
+                self._query_int(query, "page", 1, 1, 100),
+                self._query_int(query, "limit", 100, 1, 250)))
+            return
+        if path == "/api/asset/quote":
+            self._send(200, C.cg_quote((query.get("id") or [""])[0]))
+            return
+        if path == "/api/coinmarketcap/active":
+            self._send(200, C.cmc_active(
+                self._query_int(query, "page", 1, 1, 200),
+                self._query_int(query, "limit", 100, 1, 250)))
+            return
+        if path == "/api/coinbase/pairs":
+            self._send(200, C.coinbase_pairs(
+                self._query_int(query, "offset", 0, 0, 10000),
+                self._query_int(query, "limit", 100, 1, 100)))
+            return
+        if path == "/api/news":
+            self._send(200, C.news(self._query_int(query, "limit", 20, 1, 40)))
+            return
+        if path == "/api/mining/estimate":
+            names = ("miner_hashrate_hps","network_hashrate_hps","block_reward",
+                     "blocks_per_day","price_usd","fee_percent",
+                     "power_watts","electricity_usd_per_kwh")
+            self._send(200, C.mining_estimate({n:(query.get(n) or [None])[0] for n in names}))
             return
         if path == "/api/market/global":
             self._send(200, M.global_market())
