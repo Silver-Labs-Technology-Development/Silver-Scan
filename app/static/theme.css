@@ -123,3 +123,34 @@ html[data-theme=dark] .site-footer a,html[data-theme=dark] .site-footer strong{c
 #compare-form>button{align-self:end;border:1px solid #8ed2ff;background:#8fd2fc;color:#0b223b;font-size:12px;padding:11px 15px;border-radius:8px;font-weight:800}
 @media(max-width:940px){.insights-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.insight-row{grid-template-columns:minmax(155px,2fr) repeat(2,minmax(100px,1fr))}.insight-row .insight-stat:nth-of-type(4){grid-column:1/-1}.compare-bars{grid-template-columns:1fr}}
 @media(max-width:580px){.insights-grid{grid-template-columns:1fr}.insight-row{grid-template-columns:repeat(2,minmax(0,1fr))}.insight-row-name{grid-column:1/-1}.insight-row .insight-stat:nth-of-type(4){grid-column:auto}.compare-bar-row{grid-template-columns:50px minmax(65px,1fr) 70px}}
+
+/* Local account and manual asset portfolio in Coin Watch. */
+.account-auth-layout,.account-portfolio-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.account-auth-layout[hidden],#account-portfolio[hidden]{display:none!important}
+.account-form{display:flex;flex-direction:column;gap:11px}
+.account-form h3,.account-summary h3{font-size:19px;margin:0;color:var(--text)}
+.account-form p,.account-summary p{font-size:12px;line-height:1.7;color:var(--muted)}
+.account-form label{font-size:12px;font-weight:800;color:var(--text)}
+.account-form input{background:var(--panel-alt);border:1px solid var(--line);color:var(--text);border-radius:8px;padding:11px 13px;font-size:14px}
+.account-primary{background:#a6e0ff;color:#102a43;border:1px solid #a6e0ff;border-radius:9px;padding:11px 15px;font-size:13px;font-weight:850;cursor:pointer}
+.account-primary:hover{background:#d0f0ff}
+.account-primary:disabled{opacity:.6;cursor:wait}
+.account-session-strip{display:flex;gap:15px;align-items:center;justify-content:space-between;background:var(--panel-alt);padding:13px 20px;border:1px solid var(--line);border-radius:9px;margin-bottom:15px}
+.account-session-strip span{color:var(--text);font-size:13px;font-weight:750;overflow-wrap:anywhere}
+.account-summary{display:flex;flex-direction:column;gap:12px}
+.account-summary #portfolio-value{font-size:clamp(26px,3.3vw,42px);letter-spacing:-.04em;color:var(--text);overflow-wrap:anywhere}
+.account-summary #portfolio-coverage{font-size:12px;color:var(--muted)}
+.account-summary #portfolio-refresh{margin-top:auto;align-self:flex-start}
+#portfolio-rows{margin-top:16px;overflow-x:auto}
+.portfolio-holdings{display:flex;flex-direction:column}
+.portfolio-holding{display:grid;grid-template-columns:minmax(130px,1.6fr) minmax(100px,1fr) minmax(105px,1fr) auto;gap:15px;align-items:center;padding:15px 4px;border-bottom:1px solid var(--line)}
+.portfolio-holding:last-child{border-bottom:0}
+.portfolio-coin-name,.portfolio-coin-quantity,.portfolio-coin-value{display:flex;flex-direction:column;gap:5px;min-width:0}
+.portfolio-coin-name strong,.portfolio-coin-quantity strong,.portfolio-coin-value strong{color:var(--text);font-size:14px;overflow-wrap:anywhere}
+.portfolio-coin-name small,.portfolio-coin-quantity small,.portfolio-coin-value small{color:var(--muted);font-size:11px;overflow-wrap:anywhere}
+.portfolio-coin-actions{display:flex;gap:5px}
+.hub-portfolio-pick{display:inline-block;margin-left:5px;border:1px solid var(--line);border-radius:6px;background:var(--brand-lite);color:var(--brand);font-size:11px;font-weight:760;padding:5px 8px;cursor:pointer}
+.hub-portfolio-pick:hover,.hub-watch-star:hover{border-color:var(--brand)}
+#account-message:not(:empty){margin:10px 0 16px;padding:10px 13px}
+@media(max-width:790px){.account-auth-layout,.account-portfolio-grid{grid-template-columns:1fr}.portfolio-holding{grid-template-columns:1fr 1fr}.portfolio-coin-actions{grid-column:1/-1}}
+@media(max-width:500px){.portfolio-holding{grid-template-columns:1fr}.portfolio-coin-actions{grid-column:1/-1}}
