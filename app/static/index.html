@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en">
-<head>
+<head><script src="./site-shell.js" defer></script>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#0e1e31">
@@ -9,7 +9,7 @@
   <link rel="stylesheet" href="./styles.css">
   <script type="module" src="./explorer.js"></script>
   <script type="module" src="./research.js"></script>
-<link rel="stylesheet" href="./theme.css"><script src="./alpha.js" defer></script></head>
+<link rel="stylesheet" href="./theme.css"><script src="./alpha.js" defer></script><link rel="stylesheet" href="./site-shell.css"></head>
 <body>
   <a class="skip-link" href="#research-view">Skip to main content</a>
   <div class="utility-bar">
@@ -23,37 +23,7 @@
       <span class="utility-source" id="market-source-top">Data: CoinGecko · loading</span>
     </div>
   </div>
-  <header class="site-header">
-    <div class="shell header-main">
-      <a class="brand" href="./" aria-label="SilverScan homepage">
-        <span class="brand-mark" aria-hidden="true"><span>S</span></span>
-        <span class="brand-type"><strong>SILVER<span>SCAN</span></strong><small>CRYPTO INTELLIGENCE · SILVER LABS</small></span>
-      </a>
-      <form id="global-search-form" class="global-search" role="search">
-        <label class="sr-only" for="global-search">Search cryptocurrencies</label>
-        <span aria-hidden="true" class="search-icon">⌕</span>
-        <input type="search" id="global-search" autocomplete="off" placeholder="Search coins, tickers and market data..." maxlength="100">
-        <kbd>/</kbd>
-        <button type="submit">Search</button>
-      </form>
-      <div class="header-actions">
-        <span class="currency-pill" title="Market prices are shown in US dollars">USD</span>
-        <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Switch to dark theme" title="Toggle color theme">◐</button>
-      </div>
-    </div>
-    <div class="nav-wrap">
-      <nav class="shell research-nav" aria-label="SilverScan sections">
-        <button type="button" data-tab="markets" class="selected" aria-pressed="true">Markets</button>
-        <a href="./coin-watch.html">Coin Watch</a>
-        <button type="button" data-tab="heatmap" aria-pressed="false">Heatmap</button>
-        <a href="./news.html">Crypto News</a>
-        <a href="./mining.html">Mining &amp; ROI</a>
-        <button type="button" data-tab="dex" aria-pressed="false">DEX Scan</button>
-        <a href="./universal-explorer.html">Universal Explorer</a><button type="button" data-tab="explorer" aria-pressed="false">BTCS L1</button>
-        <a href="./insights.html">Market Insights</a><a href="./compare.html">Compare Coins</a><a href="./features.html">All Features</a>
-      </nav>
-    </div>
-  </header>
+  <header class="site-header" role="banner"></header>
   <div class="shell workspace">
     <div class="page-intro" id="page-intro">
       <div>
@@ -61,19 +31,26 @@
         <h1 id="page-title">Cryptocurrency Prices by Market Cap</h1>
         <p id="page-description" class="muted">Research markets and blockchain activity across multiple providers. <a href="./coin-watch.html">Explore low-ranked coins and tokens, including BTCS →</a></p>
       </div>
-      <div class="intro-side"><span class="tiny-label">SELECTED MARKET FEED</span><strong id="data-state">Connecting to providers</strong><small id="last-updated">Updated: —</small></div>
+      <aside class="intro-side ss-source-aside">
+      <span class="tiny-label">MARKET FEED</span>
+      <strong id="data-state">Checking market data</strong>
+      <small id="last-updated">Updated: —</small>
+      <details class="ss-source-details" id="ss-source-details">
+        <summary aria-label="Show data source status"><span class="ss-source-dot" aria-hidden="true"></span><span id="ss-source-count">5 data sources</span><span aria-hidden="true">⌄</span></summary>
+        <div class="ss-sources-popover">
+          <div class="ss-sources-top">
+            <strong>Data sources</strong>
+            <button id="refresh-sources" type="button" aria-label="Refresh data source statuses">Refresh</button>
+          </div>
+          <div id="sources-status" class="ss-sources-rows" aria-live="polite">
+            <p>Checking provider access…</p>
+          </div>
+          <small class="ss-source-note">Provider counts overlap. Not every feed is connected; a listing is not a verified coin.</small>
+        </div>
+      </details>
+    </aside>
     </div>
-    <section class="provider-board" aria-labelledby="providers-heading">
-      <div class="provider-board-head">
-        <div><h2 id="providers-heading">Market Data Sources</h2>
-          <p>Five independent feeds in one workspace. Activity is measured per provider; coverage counts are not added together or treated as verified unique coins.</p></div>
-        <button id="refresh-sources" type="button" class="provider-refresh">Refresh connection status</button>
-      </div>
-      <div id="sources-status" class="provider-grid" aria-live="polite">
-        <p class="hub-note">Checking backend source configuration and recent observations…</p>
-      </div>
-      <p class="provider-disclaimer">CoinGecko supplies this page's global market totals and visual charts. CoinMarketCap and LiveCoinWatch can supply separate market rankings; Coinbase supplies trading pairs; MiningPoolStats supplies pool information only when an authorized dataset is connected. <a href="./coin-watch.html">Explore other assets in Coin Watch →</a></p>
-    </section>
+    
     <section id="market-overview" class="market-overview" aria-label="Global market statistics">
       <div class="metric-card">
         <span class="metric-label">Global Market Cap</span>
