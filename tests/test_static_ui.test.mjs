@@ -52,3 +52,33 @@ test('query controls use encoded parameters and no authorization or signing flow
   assert.match(research, /renderHeatmap/)
   assert.doesNotMatch(explorer, /mining\.submit|sendrawtransaction|signTransaction/)
 })
+
+
+test('Coin Universe shows source-backed multi-provider discovery, publisher news and mining models', () => {
+  const hub = readFileSync('app/static/data-hub.html', 'utf8')
+  const script = readFileSync('app/static/data-hub.js', 'utf8')
+  const styles = readFileSync('app/static/data-hub.css', 'utf8')
+  assert.match(page, /href="\.\/data-hub\.html#universe"/)
+  assert.match(page, /href="\.\/data-hub\.html#news"/)
+  assert.match(hub, /bitcoin-silver-2/)
+  assert.match(hub, /CoinGecko active-market pages/)
+  assert.match(hub, /CoinMarketCap active listings/)
+  assert.match(hub, /Coinbase available spot pairs/)
+  assert.match(hub, /Latest Crypto News/)
+  assert.match(hub, /Mining Estimate Laboratory/)
+  assert.match(script, /\/api\/asset\/quote\?id=bitcoin-silver-2/)
+  for (const api of [
+    '/api/catalog/search', '/api/catalog/page', '/api/coinmarketcap/active',
+    '/api/coinbase/pairs', '/api/news', '/api/mining/estimate'
+  ]) assert.ok(script.includes(api), 'Missing API: '+api)
+  assert.match(script, /textContent/)
+  assert.doesNotMatch(script, /innerHTML\s*=/)
+  assert.match(styles, /@media\(max-width:790px\)/)
+  assert.match(styles, /#0c182b/)
+})
+
+test('Silver Scan shared palette uses navy and ice blue, not a white-gold-only system',()=>{
+  assert.match(css, /--bg:#0b182b/)
+  assert.match(css, /--brand:#90d4ff/)
+  assert.match(research, /localStorage\.getItem\(THEME_KEY\)\|\|'dark'/)
+});
