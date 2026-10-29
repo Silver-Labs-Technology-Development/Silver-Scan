@@ -76,6 +76,9 @@ class Handler(BaseHTTPRequestHandler):
         if path in ("/", "/index.html"):
             self._static("index.html", "text/html; charset=utf-8")
             return
+        if path == "/styles.css":
+            self._static("styles.css", "text/css; charset=utf-8")
+            return
         if path == "/research.js":
             self._static("research.js", "application/javascript; charset=utf-8")
             return
