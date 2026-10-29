@@ -1,9 +1,8 @@
-# Silver Scan — Cloudflare Pages configuration
-# Deploys the static frontend (HTML/CSS/JS) to Cloudflare Pages.
-# The Python API backend (app/main.py) must run separately (not on Pages).
-
+# SilverScan legacy static-only fallback for the main branch.
+# Main does NOT contain app/static/_worker.js; public-alpha contains
+# the proper Worker-backed release. Use public-alpha in Cloudflare Builds.
 name = "silver-scan"
-compatibility_date = "2026-10-24"
+compatibility_date = "2026-10-29"
 
-[pages]
-pages_dir = "app/static"
+[assets]
+directory = "./app/static"
