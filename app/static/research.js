@@ -471,6 +471,14 @@ function bindSearch(){
   form.addEventListener('submit',event=>{
     event.preventDefault();
     state.query=input.value.trim();state.page=0;
+    // The market table is intentionally a limited leaderboard; forward
+    // unknown coins to provider-wide catalog search, never silently exclude.
+    const term=state.query.toLowerCase();
+    const matches=state.market?.assets?.some(c=>(c.name||'').toLowerCase().includes(term)||(c.symbol||'').toLowerCase().includes(term));
+    if(state.query.length>=2&&!matches){
+      location.href='./data-hub.html?search='+encodeURIComponent(state.query)+'#universe';
+      return;
+    }
     if(state.tab!=='markets'&&state.tab!=='watch')switchTab('markets');
     else if(state.selected){state.selected=null;overview.hidden=false;renderMarketHome();}
     else paintTable();
