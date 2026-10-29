@@ -10,6 +10,7 @@
 */
 const CG = "https://api.coingecko.com/api/v3";
 const FNG = "https://api.alternative.me/fng/";
+const LORE = "https://api.coinlore.net/api";
 const ALLOWED_PAGES = new Set([25,50,100,200]);
 const ID = /^[a-z0-9][a-z0-9-]{0,99}$/;
 const JSON_HEADERS = {
@@ -55,7 +56,7 @@ const safeAsset=row=>({
 
 async function upstream(url, headers={}, maxLength=1800000){
   const parsed=new URL(url);
-  if(![CG,"https://api.alternative.me"].some(base=>parsed.origin===new URL(base).origin))
+  if(![CG,"https://api.alternative.me",LORE].some(base=>parsed.origin===new URL(base).origin))
     throw Error("Unknown upstream host");
   const response=await fetch(url,{
     headers:{"Accept":"application/json",...headers},
@@ -69,6 +70,80 @@ async function upstream(url, headers={}, maxLength=1800000){
   const body=await response.text();
   if(body.length>maxLength)throw Error("Source response too large");
   return JSON.parse(body);
+}
+
+
+/* CoinLore documents a keyless public API for dashboards and business tools.
+   Uses its own stable numeric IDs and 100-coin request batches. Never pretend
+   a CoinLore ID is a CoinGecko token or that missing prices are zero. */
+const loreNumber=value=>{
+  if(value===null||value===undefined||value==='')return null;
+  const number=Number(value);
+  return Number.isFinite(number)?number:null;
+};
+const loreAsset=item=>{
+  if(!item||!/^[0-9]{1,18}$/.test(String(item.id||'')))return null;
+  const name=typeof item.name==='string'?item.name.slice(0,130):'';
+  const id=String(item.id);
+  return {
+    id:'coinlore:'+id,provider_id:id,
+    name:name||'CoinLore asset '+id,
+    symbol:typeof item.symbol==='string'?item.symbol.slice(0,25):'',
+    rank:loreNumber(item.rank),
+    price_usd:loreNumber(item.price_usd),
+    market_cap_usd:loreNumber(item.market_cap_usd),
+    volume_24h_usd:loreNumber(item.volume24),
+    circulating_supply:loreNumber(String(item.csupply||'').replace(/,/g,'')),
+    change_1h_pct:loreNumber(item.percent_change_1h),
+    change_24h_pct:loreNumber(item.percent_change_24h),
+    change_7d_pct:loreNumber(item.percent_change_7d),
+    sparkline_7d:[],icon:null,
+    market_status:'provider-reported-volume',network_identity:'provider-aggregated (not chain-verified)'
+  };
+};
+async function loreMarkets(url,forceFirst=false){
+  const page=forceFirst?1:clampedInt(url.searchParams.get('page'),1,1,500);
+  const limit=forceFirst?clampedInt(url.searchParams.get('limit'),50,1,100):
+    clampedInt(url.searchParams.get('limit'),50,25,200);
+  if(!forceFirst&&!ALLOWED_PAGES.has(limit))throw Error('Select 25, 50, 100 or 200 coins per page');
+  const rows=[];let count=null,sourceTime=null;
+  const start=(page-1)*limit;
+  for(let i=0;i<limit;i+=100){
+    const batch=Math.min(100,limit-i);
+    const info=await upstream(LORE+'/tickers/?start='+(start+i)+'&limit='+batch,{},950000);
+    if(!info||!Array.isArray(info.data))throw Error('CoinLore returned an invalid market page');
+    if(Number.isInteger(info.info?.coins_num))count=info.info.coins_num;
+    if(Number.isInteger(info.info?.time))sourceTime=info.info.time;
+    rows.push(...info.data);
+    if(info.data.length<batch)break;
+  }
+  const assets=rows.map(loreAsset).filter(c=>c&&positive(c.price_usd)&&positive(c.volume_24h_usd));
+  return {
+    source:'CoinLore',source_url:'https://www.coinlore.com/cryptocurrency-data-api',
+    assets,page,limit,provider_rows:rows.length,has_more:count===null?rows.length===limit:start+rows.length<count,
+    provider_market_count:count,currency:'USD',fetched_at:sourceTime||Math.floor(Date.now()/1000),
+    stale:false,note:'Live CoinLore market observations. Coins with missing/zero prices or volume are excluded. Not an independently validated universal token index.'
+  };
+}
+async function loreGlobal(){
+  const raw=await upstream(LORE+'/global/',{},250000);
+  const item=Array.isArray(raw)?raw[0]:null;
+  if(!item)throw Error('CoinLore global market data unavailable');
+  return {
+    source:'CoinLore',fetched_at:Math.floor(Date.now()/1000),stale:false,
+    market_cap_usd:loreNumber(item.total_mcap),volume_24h_usd:loreNumber(item.total_volume),
+    btc_dominance_pct:loreNumber(item.btc_d),eth_dominance_pct:loreNumber(item.eth_d),
+    active_cryptocurrencies:loreNumber(item.coins_count),
+    market_cap_change_24h_pct:loreNumber(item.mcap_change),
+    note:'Global reported totals from CoinLore; asset count is the provider count and not SilverScan independently indexed coins.'
+  };
+}
+async function loreQuote(url){
+  const id=url.searchParams.get('id')||'';
+  if(!/^[0-9]{1,18}$/.test(id))throw Error('Invalid CoinLore asset ID');
+  const raw=await upstream(LORE+'/ticker/?id='+id,{},150000);
+  const asset=Array.isArray(raw)?loreAsset(raw[0]):null;
+  return {source:'CoinLore',asset,fetched_at:Math.floor(Date.now()/1000),stale:false};
 }
 
 const cgEnabled=env=>Boolean(env.COINGECKO_API_KEY&&env.CG_COMMERCIAL_USE_APPROVED==="yes");
@@ -167,6 +242,7 @@ function sources(env){
   const cg=cgEnabled(env);
   const at=Math.floor(Date.now()/1000);
   const list=[
+    {name:"CoinLore",feature:"Live ranked coins and global totals; no API key",access:"requestable",status:"requestable",last_observed:null,docs_url:"https://www.coinlore.com/cryptocurrency-data-api"},
     {name:"CoinGecko",feature:"Market-cap prices, rankings and global stats",access:cg?"requestable":"licensed_key_required",status:cg?"requestable":"api_key_required",last_observed:null,docs_url:"https://www.coingecko.com/en/api"},
     {name:"CoinMarketCap",feature:"Additional research and exchange coverage",access:"integration_pending",status:"integration_pending",last_observed:null,docs_url:"https://coinmarketcap.com/api/"},
     {name:"Coinbase",feature:"Exchange spot pairs (not global coin counts)",access:"integration_pending",status:"integration_pending",last_observed:null,docs_url:"https://www.coinbase.com/"},
@@ -175,7 +251,7 @@ function sources(env){
   ];
   return {sources:list,provider_count:list.length,
     verified_unique_coin_count:null,asset_identity_merge_active:false,fetched_at:at,
-    note:"Five future/active connector categories, not five currently working sources or a verified 22,000-coin index."};
+    note:"CoinLore is a keyless on-demand live source. Other providers require separate authorization. Source counts overlap and are not a verified 22k asset index."};
 }
 function poolCoins(){
   const data=[
@@ -203,12 +279,14 @@ export default {
     if(url.pathname.startsWith("/api/account/"))return fail("Account registration and synced portfolios are not available in public alpha.",403);
     try{
       const path=url.pathname;
-      if(path==="/api/alpha/health")return json({status:"alpha",backend:"Cloudflare Pages",live_services:["static site","alternative.me sentiment"],locked_services:["account storage","public RPC","trading","payouts"],timestamp:Date.now()});
+      if(path==="/api/alpha/health")return json({status:"alpha",backend:"Cloudflare Workers",live_services:["static site","CoinLore market API","alternative.me sentiment"],locked_services:["account storage","public RPC","trading","payouts"],timestamp:Date.now()});
       if(path==="/api/sources/status")return json(sources(env));
       if(path==="/api/mining/coins")return json(poolCoins());
-      if(path==="/api/market/global")return json(await globalMarket(env));
-      if(path==="/api/markets")return json(await markets(url,env,true));
-      if(path==="/api/catalog/page")return json(await markets(url,env));
+      if(path==="/api/market/global")return json(cgEnabled(env)?await globalMarket(env):await loreGlobal());
+      if(path==="/api/coinlore/markets")return json(await loreMarkets(url));
+      if(path==="/api/coinlore/quote")return json(await loreQuote(url));
+      if(path==="/api/markets")return json(cgEnabled(env)?await markets(url,env,true):await loreMarkets(url,true));
+      if(path==="/api/catalog/page")return json(cgEnabled(env)?await markets(url,env):await loreMarkets(url));
       if(path==="/api/coin-watch/quotes")return json(await quotes(url,env));
       if(path==="/api/asset/quote")return json(await quotes(url,env,true));
       if(path==="/api/market/sentiment")return json(await sentiment(url));
