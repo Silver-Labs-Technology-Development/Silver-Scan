@@ -8,7 +8,7 @@ const explorer = readFileSync('app/static/explorer.js', 'utf8')
 const research = readFileSync('app/static/research.js', 'utf8')
 
 test('Silver Scan includes four real research/explorer views', () => {
-  for (const tab of ['explorer','markets','watch','dex','mining']) {
+  for (const tab of ['explorer','markets','watch','dex','mining','heatmap']) {
     assert.match(page, new RegExp('data-tab="' + tab + '"'))
   }
   for (const id of ['explorer-search','view','research-view','net']) {
@@ -16,6 +16,7 @@ test('Silver Scan includes four real research/explorer views', () => {
   }
   assert.match(page, /Silver Labs/i)
   assert.match(page, /not SilvEx trades/i)
+  assert.match(page, /href="\.\/features\.html"/)
 })
 
 test('research modules are external; untrusted block fields never become HTML templates', () => {
@@ -47,5 +48,7 @@ test('query controls use encoded parameters and no authorization or signing flow
   assert.match(research, /Fear & Greed/)
   assert.match(research, /Market Dominance/)
   assert.match(research, /historical/i)
+  assert.match(research, /Market Cap Heatmap/)
+  assert.match(research, /renderHeatmap/)
   assert.doesNotMatch(explorer, /mining\.submit|sendrawtransaction|signTransaction/)
 })
