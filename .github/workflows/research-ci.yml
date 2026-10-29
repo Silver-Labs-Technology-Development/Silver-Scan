@@ -1,0 +1,29 @@
+name: Silver Scan research UI and adapter checks
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  research:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pure test dependency
+        run: python -m pip install pytest
+      - name: Compile Python backend and tests
+        run: python -m compileall -q app tests
+      - name: Unit test provider adapters without outbound API access
+        run: python -m pytest -q tests/test_market_data.py
+      - name: Validate static browser script syntax
+        run: node --check app/static/research.js
+      # Existing tests/test_adapters.py requires a running Bitcoin Silver regtest
+      # node on localhost:18443. It is exercised separately by the operator.
