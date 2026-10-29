@@ -1,4 +1,4 @@
-# Silver Scan multi-source market/data policy
+# SilverScan multi-source market/data policy
 
 The platform is a **reader and research interface**, not a licensed bulk
 redistribution feed, mining service or exchange. Discovering an asset ID is
@@ -7,7 +7,7 @@ making that asset tradeable.
 
 ## Sources and currently implemented endpoints
 
-| Source | Silver Scan path | Capability | Boundary |
+| Source | SilverScan path | Capability | Boundary |
 | --- | --- | --- | --- |
 | CoinGecko | `/api/catalog/search?q=BTCS` | Catalog ID discovery across its coin universe (incl. `bitcoin-silver-2`) | Entries are unverified catalog identities, **not** all active markets |
 | CoinGecko | `/api/catalog/page?page=1&limit=100` | Server-side provider pagination, positive price/24h volume observations | No artificial 100-coin cap; API limit is 250 per page, preview defaults to 100 |
@@ -24,15 +24,13 @@ All pricing and news endpoints use allowlisted HTTPS hosts, bounded responses,
 timeouts and cache/stale behavior. The code does not fabricate prices on source
 failure. Provider errors and stale snapshots should be visible in the UI.
 
-The frontend at `/data-hub.html` uses distinct tabs/sections for Coin
-Universe, publisher news, mining expected-value modelling and mining-source
-provenance. The existing dashboard provides charts, project discovery, heatmap,
+SilverScan now has distinct pages: `/coin-watch.html` combines broad CoinGecko ID discovery with locally saved watchlist coins and optional CMC/Coinbase comparisons; `/news.html` shows attributed publisher headlines; `/mining.html` includes verified network status and explicitly user-input mining estimates. `/data-hub.html` is a legacy bookmark redirect. The existing dashboard provides charts, project discovery, heatmap,
 Fear & Greed and the BTCS L1 explorer.
 
 ## Important: catalog capacity is not measured coverage
 
 CoinGecko and CoinMarketCap offer large catalogs and APIs with pagination.
-Silver Scan does **not** currently have 22,000+ independently indexed, live,
+SilverScan does **not** currently have 22,000+ independently indexed, live,
 verified or tradeable assets. Its API routes let you query their catalogs and
 active markets with source and timestamps; actual available count varies by
 provider, cache, account plan, API quota, user query and source policy.
@@ -80,7 +78,7 @@ cd ~/Silver-Labs/Silver-Scan
 # Check for existing uncommitted changes before choosing a branch/worktree.
 # Pull request 1 holds the current dev UI and provider work.
 git fetch origin pull/1/head
-# Start an isolated CLEAN preview worktree as in the Silver Scan README.
+# Start an isolated CLEAN preview worktree as in the SilverScan README.
 ```
 
 Optional environment keys for the Python backend are read server-side only:
