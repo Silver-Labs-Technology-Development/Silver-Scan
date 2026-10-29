@@ -100,3 +100,28 @@ test('sentiment works from a public source with clearly attributed observations'
     assert.equal(data.history.length,2);
   }finally{globalThis.fetch=original}
 });
+
+
+test('existing Cloudflare Worker deploy config uses bound static assets and safe API routing',()=>{
+  const toml=readFileSync('wrangler.worker.toml','utf8');
+  const ignore=readFileSync('app/static/.assetsignore','utf8');
+  const headers=readFileSync('app/static/_headers','utf8');
+  assert.match(toml,/name\s*=\s*"silver-scan"/);
+  assert.match(toml,/main\s*=\s*"\.\/app\/static\/_worker\.js"/);
+  assert.match(toml,/directory\s*=\s*"\.\/app\/static"/);
+  assert.match(toml,/binding\s*=\s*"ASSETS"/);
+  assert.match(toml,/run_worker_first\s*=\s*\["\/api\/\*"\]/);
+  assert.match(ignore,/^_worker\.js$/m);
+  assert.match(headers,/X-Content-Type-Options:\s*nosniff/);
+  assert.match(headers,/Content-Security-Policy:/);
+  assert.match(toml,/compatibility_date/);
+});
+
+test('public worker does not allow local account registration or the universal RPC proxy',async()=>{
+  for(const path of ['/api/account/login','/api/account/portfolio','/api/universal/search?network=bsc&q=123']){
+    const response=await worker.fetch(req(path),env);
+    assert.ok([403,503].includes(response.status));
+    const content=await parsed(response);
+    assert.equal(content.alpha,true);
+  }
+});
