@@ -116,7 +116,7 @@ def test_expected_value_estimator_never_infers_missing_inputs():
 
 def test_reject_invalid_catalog_search_and_poisoned_numeric_input():
     with pytest.raises(ValueError):
-        C.cg_catalog_search("<script>")
+        C.cg_catalog_search("\\x00invalid")
     with pytest.raises(ValueError):
         C.cg_market_page(101,250)
     with pytest.raises(ValueError):
