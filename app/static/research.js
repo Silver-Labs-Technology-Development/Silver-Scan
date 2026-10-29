@@ -478,7 +478,7 @@ function bindSearch(){
   const form=$('global-search-form'),input=$('global-search');
   form.addEventListener('submit',event=>{
     event.preventDefault();
-    state.query=input.value.trim();state.page=0;
+    state.query=input.value.trim();
     // The market table is intentionally a limited leaderboard; forward
     // unknown coins to provider-wide catalog search, never silently exclude.
     const term=state.query.toLowerCase();
