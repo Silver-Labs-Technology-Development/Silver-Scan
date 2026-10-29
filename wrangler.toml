@@ -1,9 +1,7 @@
-# Silver Scan — Cloudflare Pages configuration
-# Deploys the static frontend (HTML/CSS/JS) to Cloudflare Pages.
-# The Python API backend (app/main.py) must run separately (not on Pages).
-
+# SilverScan public viewing alpha — Cloudflare Pages Git integration.
+# The Pages project should use its Git-connected production branch "public-alpha".
+# This file contains no secrets and no server-side account, payout or RPC bindings.
+# Review Pages dashboard settings before first deployment.
 name = "silver-scan"
-compatibility_date = "2026-10-24"
-
-[pages]
-pages_dir = "app/static"
+compatibility_date = "2026-10-29"
+pages_build_output_dir = "./app/static"
