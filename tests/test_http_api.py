@@ -229,6 +229,6 @@ def test_source_coverage_low_rank_btcs_news_and_mining_routes(api_server):
     }
     from urllib.parse import urlencode
     status, _, calc = data(api_server, "/api/mining/estimate?" + urlencode(values))
-    assert status == 200 and calc["electricity_usd_per_day"] == 1.2
+    assert status == 200 and calc["electricity_usd_per_day"] == pytest.approx(1.2)
     status, _, invalid = data(api_server, "/api/mining/estimate?miner_hashrate_hps=x")
     assert status == 400 and "error" in invalid
