@@ -113,3 +113,64 @@ test('shared CSS exposes distinct readable dark and light panels',()=>{
   assert.match(themeJS,/localStorage\.getItem\(KEY\)/);
   assert.match(theme,/opacity:1/);
 });
+
+
+test('manual account portfolio has real forms and user-owned positions without wallet verification',()=>{
+  const watch=readFileSync('app/static/coin-watch.html','utf8');
+  const client=readFileSync('app/static/portfolio.js','utf8');
+  assert.match(watch,/id="register-form"/);
+  assert.match(watch,/id="login-form"/);
+  assert.match(watch,/id="holding-form"/);
+  assert.match(watch,/id="portfolio-rows"/);
+  assert.match(watch,/id="holding-quantity"/);
+  assert.match(watch,/src="\.\/portfolio\.js"/);
+  assert.match(watch,/No wallet connection, signatures, deposits or ownership checks/);
+  assert.match(client,/\/api\/account\/register/);
+  assert.match(client,/\/api\/account\/portfolio/);
+  assert.match(client,/\/api\/coin-watch\/quotes/);
+  assert.match(client,/credentials:'same-origin'/);
+  assert.doesNotMatch(client,/localStorage\.setItem/);
+  assert.doesNotMatch(client,/innerHTML\s*=/);
+});
+
+test('news articles support attributed image media, favicons and lazy-loaded fallbacks',()=>{
+  const script=readFileSync('app/static/data-hub.js','utf8');
+  const css=readFileSync('app/static/data-hub.css','utf8');
+  assert.match(script,/thumbnail_url/);
+  assert.match(script,/favicon_url/);
+  assert.match(script,/loading='lazy'/);
+  assert.match(script,/hub-story-image-fallback/);
+  assert.match(css,/hub-story-artwork\.image-ready/);
+  assert.match(css,/hub-favicon-wrap\.icon-ready/);
+});
+
+test('market insights and comparison have real pages and provider endpoints',()=>{
+  const insights=readFileSync('app/static/insights.html','utf8');
+  const compare=readFileSync('app/static/compare.html','utf8');
+  const a=readFileSync('app/static/insights.js','utf8');
+  const b=readFileSync('app/static/compare.js','utf8');
+  for(const id of ['insights-trending','insights-categories','insights-exchanges','insights-defi']){
+    assert.ok(insights.includes('id="'+id+'"'));
+  }
+  assert.match(compare,/id="compare-ids"/);
+  assert.match(a,/\/api\/insights\/trending/);
+  assert.match(a,/\/api\/insights\/categories/);
+  assert.match(a,/\/api\/insights\/exchanges/);
+  assert.match(a,/\/api\/insights\/defi/);
+  assert.match(b,/\/api\/coin-watch\/quotes/);
+  assert.doesNotMatch(a,/innerHTML\s*=/);
+  assert.doesNotMatch(b,/innerHTML\s*=/);
+});
+
+test('every planned feature leads to a meaningful integration outline',()=>{
+  const html=readFileSync('app/static/features.html','utf8');
+  const detailed=readFileSync('app/static/feature-detail.html','utf8');
+  const script=readFileSync('app/static/feature-detail.js','utf8');
+  assert.match(html,/href="\.\/feature-detail\.html\?feature=/);
+  assert.doesNotMatch(html,/No live data module yet/);
+  assert.match(html,/href="\.\/coin-watch\.html#portfolio"/);
+  assert.match(detailed,/feature-skeleton/);
+  assert.match(script,/DOMParser/);
+  assert.match(script,/textContent/);
+  assert.doesNotMatch(script,/innerHTML\s*=/);
+});
