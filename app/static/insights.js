@@ -54,27 +54,53 @@ async function categories(){
 let exchangePage=1;
 async function exchanges(next=false){
   const target=document.getElementById('insights-exchanges'),more=document.getElementById('more-exchanges');
+  const provider=document.getElementById('exchange-provider').value;
+  const sort=document.getElementById('exchange-sort').value;
   const page=next?exchangePage+1:1;more.disabled=true;
-  safeStatus('insights-exchanges','Loading provider exchange page '+page+'…');
+  safeStatus('insights-exchanges','Loading '+(provider==='cg'?'CoinGecko market':'CoinMarketCap exchange ID')+' page '+page+'…');
   try{
-    const data=await fetchData('/api/insights/exchanges?page='+page+'&limit=30');
+    const data=await fetchData(provider==='cg'?
+      '/api/insights/exchanges?page='+page+'&limit=30':
+      '/api/exchanges/cmc?page='+page+'&limit=30');
     exchangePage=page;more.disabled=!data.has_more;
-    const rows=(data.exchanges||[]).map(exchange=>{
+    const exchanges=(data.exchanges||[]).slice();
+    if(provider==='cg'){
+      const sortOrder={
+        trust:(a,b)=>(b.trust_score??-1)-(a.trust_score??-1),
+        volume:(a,b)=>(b.trade_volume_24h_btc??-1)-(a.trade_volume_24h_btc??-1),
+        rank:(a,b)=>(a.rank??999999)-(b.rank??999999),
+        name:(a,b)=>a.name.localeCompare(b.name)
+      };
+      exchanges.sort(sortOrder[sort]||sortOrder.trust);
+    }else{
+      // CMC keyless /exchange/map does not supply exchange rank or volume.
+      // Do not substitute CoinGecko measurements using an ambiguous name match.
+      exchanges.sort((a,b)=>a.name.localeCompare(b.name));
+    }
+    const rows=exchanges.map(exchange=>{
       const card=group('insight-row',group('insight-row-name',
         node('strong',exchange.name),
-        node('small',exchange.country||'Country unavailable')),
-        stat('Provider rank',exchange.rank||'—'),
-        stat('Trust score',Number.isFinite(exchange.trust_score)?exchange.trust_score.toFixed(0)+'/10':'—'),
-        stat('24h BTC volume',fmt(exchange.trade_volume_24h_btc)));
-      if(typeof exchange.website==='string'&&exchange.website.startsWith('https://')){
-        const n=a(exchange.website,'Official website ↗');n.rel='noopener noreferrer';n.target='_blank';card.append(n);
+        node('small',provider==='cg'?(exchange.country||'Country unavailable'):exchange.id+' · '+(exchange.tracked?'Tracked market':'Unverified status'))));
+      if(provider==='cg'){
+        card.append(stat('Provider rank',exchange.rank||'—'),
+          stat('Trust score',Number.isFinite(exchange.trust_score)?exchange.trust_score.toFixed(0)+'/10':'—'),
+          stat('24h BTC volume',fmt(exchange.trade_volume_24h_btc)));
+        if(typeof exchange.website==='string'&&exchange.website.startsWith('https://')){
+          const a=document.createElement('a');a.href=exchange.website;a.rel='noopener noreferrer';a.target='_blank';a.textContent='Website ↗';card.append(a);
+        }
+      }else{
+        card.append(stat('Market tracking',exchange.tracked?'Active':'Unknown'),
+          stat('Provider ID',exchange.id),stat('Volume / score','Not provided'));
       }
       return card;
     });
-    target.replaceChildren(...(rows.length?rows:[node('p','No exchange records returned for this page.','hub-note')]),source(data));
-    document.getElementById('exchange-status').textContent='Provider page '+exchangePage+' · '+rows.length+' venues';
+    target.replaceChildren(...(rows.length?rows:[node('p','No exchange records returned for this source page.','hub-note')]),source(data));
+    document.getElementById('exchange-status').textContent=(provider==='cg'?'CoinGecko':'CoinMarketCap')+
+      ' page '+exchangePage+' · '+rows.length+' venues; comparison is limited to this source page';
   }catch(e){safeStatus('insights-exchanges','External exchange data unavailable: '+e.message);more.disabled=false;}
 }
+document.getElementById('exchange-provider')?.addEventListener('change',()=>exchanges(false));
+document.getElementById('exchange-sort')?.addEventListener('change',()=>exchanges(false));
 async function defi(){
   const target=document.getElementById('insights-defi');safeStatus('insights-defi','Loading DeFi statistics…');
   try{
