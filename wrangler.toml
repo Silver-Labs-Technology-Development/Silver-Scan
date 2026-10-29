@@ -1,7 +1,12 @@
-# SilverScan public viewing alpha — Cloudflare Pages Git integration.
-# The Pages project should use its Git-connected production branch "public-alpha".
-# This file contains no secrets and no server-side account, payout or RPC bindings.
-# Review Pages dashboard settings before first deployment.
+# SilverScan Cloudflare Workers public alpha (existing Worker: silver-scan).
+# Default deploy: npx wrangler deploy
+# HTML/CSS/JS are served from app/static; /api/* uses the
+# restricted, read-only Worker entrypoint. No user accounts or signing.
 name = "silver-scan"
+main = "./app/static/_worker.js"
 compatibility_date = "2026-10-29"
-pages_build_output_dir = "./app/static"
+
+[assets]
+directory = "./app/static"
+binding = "ASSETS"
+run_worker_first = ["/api/*"]
