@@ -10,7 +10,7 @@ const WATCH_KEY='silver-scan-coin-watch-v1',THEME_KEY='silver-scan-theme-v1';
 const moneyFmt=new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:2});
 const compactFmt=new Intl.NumberFormat('en-US',{notation:'compact',maximumFractionDigits:2});
 const numberFmt=new Intl.NumberFormat('en-US',{maximumFractionDigits:0});
-const state={tab:'markets',market:null,heatmap:null,global:null,sentiment:null,sort:'rank',direction:1,query:'',marketPage:0,marketPageSize:50,marketProvider:'cg',marketHasMore:false,marketLoading:false,marketSeq:0,selected:null};
+const state={tab:'markets',market:null,heatmap:null,global:null,sentiment:null,sort:'rank',direction:1,query:'',marketPage:0,marketPageSize:50,marketProvider:'lore',marketHasMore:false,marketLoading:false,marketSeq:0,selected:null};
 function el(tag,text=null,cls=''){
   const item=document.createElement(tag);if(text!==null&&text!==undefined)item.textContent=String(text);
   if(cls)item.className=cls;return item;
@@ -35,11 +35,46 @@ function source(data){
   return row;
 }
 const marketProviders={
+  lore:{label:'CoinLore · live no-key',endpoint:'/api/coinlore/markets'},
   cg:{label:'CoinGecko',endpoint:'/api/catalog/page'},
   cmc:{label:'CoinMarketCap',endpoint:'/api/coinmarketcap/active'},
   lcw:{label:'LiveCoinWatch',endpoint:'/api/livecoinwatch/markets'}
 };
+function openLoreAsset(coin){
+  if(!/^[0-9]{1,18}$/.test(String(coin.provider_id||'')))return;
+  state.selected={id:coin.id,provider_id:coin.provider_id};
+  overview.hidden=true;
+  setText('page-title',(coin.name||'Coin')+' · CoinLore');
+  setText('page-description','Real observed price, volume, capitalization and change from the selected market provider.');
+  const back=button('← Back to market rankings',()=>{
+    state.selected=null;overview.hidden=false;setText('page-title',titles.markets[0]);
+    setText('page-description',titles.markets[1]);renderMarketHome();
+  },'tab-button');
+  const headline=panel('asset-head',wrap('asset-main',
+    wrap('',el('h2',coin.name||coin.provider_id),
+      el('p',(coin.symbol||'').toUpperCase()+' · Provider rank '+(coin.rank||'—'),'muted'))),
+      wrap('asset-price',el('strong',money(coin.price_usd)),change(coin.change_24h_pct)));
+  const statPanel=panel('asset-stats');
+  const dl=el('dl',null,'asset-stats-grid');
+  for(const [name,value] of [
+    ['Reported market cap',usdCompact(coin.market_cap_usd)],
+    ['24-hour trading volume',usdCompact(coin.volume_24h_usd)],
+    ['Circulating supply',count(coin.circulating_supply)],
+    ['1-hour price change',pct(coin.change_1h_pct)],
+    ['24-hour price change',pct(coin.change_24h_pct)],
+    ['7-day price change',pct(coin.change_7d_pct)]
+  ]){
+    const pair=el('div');pair.append(el('dt',name),el('dd',value));dl.append(pair);
+  }
+  statPanel.append(el('h3','Provider market observations'),dl);
+  const note=panel('asset-head',el('p','CoinLore asset identity: '+coin.id+
+    '. Prices are aggregated external observations, not exchange execution quotes. '+
+    'Historical chart data and verified contract identification are not attached to this market row.','research-note'));
+  display(back,headline,statPanel,note,source(state.market),
+    link('https://www.coinlore.com/cryptocurrency-data-api','Source: CoinLore market data ↗'));
+}
 function providerResearch(coin){
+  if(state.marketProvider==='lore')return openLoreAsset(coin);
   if(state.marketProvider==='cg')return openAsset(coin.provider_id);
   location.href='./coin-watch.html?search='+encodeURIComponent(coin.name||coin.symbol||coin.provider_id);
 }
@@ -119,7 +154,7 @@ function status(message,data=null){
 }
 const titles={
   markets:['Cryptocurrency Prices by Market Cap','Track cryptocurrency prices, global statistics, seven-day trends, market sentiment and detailed asset research.'],
-  heatmap:['Coin Performance Heatmap','Top-100 cryptocurrency performance and market-cap sizes using real CoinGecko snapshot data.'],
+  heatmap:['Coin Performance Heatmap','Provider-reported cryptocurrency performance and market-cap sizes from live observations.'],
   watch:['Coin Watch','Your saved coins, private to this browser. Market coverage depends on the data provider.'],
   mining:['Mining & Pool Intelligence','Verified Bitcoin Silver node metrics and independent references for other mining networks.'],
   dex:['DEX Scan','Discover token pairs, liquidity and DEX activity. Results are external observations, not verified listings.'],
@@ -172,7 +207,7 @@ async function loadGlobal(){
     setText('market-cap-top',usdCompact(g.market_cap_usd));
     setText('market-volume-top',usdCompact(g.volume_24h_usd));
     setText('market-btc-top',finite(g.btc_dominance_pct)?g.btc_dominance_pct.toFixed(1)+'%':'—');
-    setText('market-source-top','Source: CoinGecko'+(g.stale?' · stale':''));
+    setText('market-source-top','Source: '+(g.source||'provider')+(g.stale?' · stale':''));
   }catch{
     setText('metric-cap-change','Global market overview unavailable');
     setText('market-source-top','Market totals unavailable');
@@ -335,9 +370,8 @@ function renderMarketHome(){
     nodes.push(wrap('visualization-grid',dominanceCard(),sentimentCard()));
   }
   nodes.push(buildMarketTable(),source(state.market));
-  if(state.marketProvider==='lcw'){
-    nodes.push(link('https://www.livecoinwatch.com/','Market data by LiveCoinWatch ↗'));
-  }
+  if(state.marketProvider==='lcw')nodes.push(link('https://www.livecoinwatch.com/','Market data by LiveCoinWatch ↗'));
+  if(state.marketProvider==='lore')nodes.push(link('https://www.coinlore.com/cryptocurrency-data-api','Market data provided by CoinLore ↗'));
   nodes.push(
     el('p','Only assets with a provider-reported positive price and 24-hour trading volume appear on market pages. Other discoverable assets remain available through Coin Watch.','research-note'));
   display(...nodes);
@@ -362,9 +396,15 @@ async function loadMarket(force=false){
   }catch(error){
     if(request!==state.marketSeq)return;
     state.marketLoading=false;
-    status('Market source unavailable');
-    display(errorMessage(error.message+' · No illustrative market numbers will be shown. Retry when the provider is reachable.'),
-      button('Retry market page',()=>loadMarket(true),'tab-button'));
+    if(state.marketProvider!=='lore'){
+      state.marketProvider='lore';state.marketPage=0;
+      status('Switching to live keyless source');
+      loadMarket(true);return;
+    }
+    status('Live market request unavailable');
+    display(errorMessage('Live CoinLore feed could not be reached. Your market view is temporarily unavailable; other research pages remain accessible.'),
+      button('Retry live markets',()=>loadMarket(true),'tab-button'),
+      link('https://www.coinlore.com/cryptocurrency-data-api','Check original CoinLore source ↗'));
   }
 }
 function renderHeatmap(){
@@ -378,7 +418,7 @@ function renderHeatmap(){
   const heading=sectionHeading('Market Cap Heatmap','Top 50 coins with reported market cap and 24h changes. This is not a sector/category heatmap.');
   const summary=panel('heatmap-intro',
     el('h3','Visualize real cryptocurrency performance'),
-    el('p','Tile prominence reflects approximate market-cap rank; green indicates a gain and red a decline over 24h. Market movements and relative sizes are derived from CoinGecko observations, not manufactured simulations.','research-note'));
+    el('p','Tile prominence reflects approximate market-cap rank; green indicates a gain and red a decline over 24h. Market movements and relative sizes are derived from the selected provider observations, not manufactured simulations.','research-note'));
   const graph=wrap('coin-heatmap');
   coins.forEach((coin,index)=>{
     const changeValue=coin.change_24h_pct;
