@@ -24,6 +24,37 @@ source's chain and pair address, while market items retain stable CoinGecko IDs.
 
 ## Run locally
 
+The frontend and Python API are served together, on a loopback-only
+development address by default. Set a valid BTCS RPC node URL and credentials
+in the **local environment**; never add credentials to tracked files.
+
+```sh
+export BTCS_NETWORK=main
+export BTCS_RPC_URL=http://127.0.0.1:10567
+# Provide BTCS_RPC_USER and BTCS_RPC_PASSWORD privately from your node config
+export SILVERSCAN_DB="$PWD/silverscan.db"
+python3 -m app.indexer --max-blocks 100
+# Re-run until caught up, or explicitly start the continuous operator CLI:
+python3 -m app.indexer --follow --max-blocks 100 --interval 15
+```
+
+The CLI starts from genesis, works in batches of at most 1000 blocks, checks
+parent hashes, and reverses orphaned transaction spends before reindexing a
+replacement branch. It does **not** fetch coins, transfer funds, or modify the
+Bitcoin Silver node. A full historical sync may take a while and needs adequate
+storage and backups. For BTCS `main`, configure the already-synced node's
+private RPC address. This is not a production service manager; keep a supervised
+deployment and off-host backups as a future operations gate.
+
+**Important database upgrade:** the original experimental `blocks`, `txs`
+and `outputs` tables stored output amounts as floating-point values. The
+new indexer deliberately creates separate `chain_blocks`, `chain_txs`,
+`chain_outputs` and `chain_inputs` tables with exact integer satoshis.
+Old data is retained but excluded from the new balance calculations. A
+genesis-first reindex is required, rather than silently converting inaccurate
+historical balances. Address pages are marked **partial** and cannot be
+considered authoritative merely because a block height is shown.
+
 Run from the repository root:
 
 ```sh
@@ -47,7 +78,10 @@ configure or certify a production backend.
 Tests:
 
 ```sh
-python3 -m pytest -q tests
+python3 -m pytest -q tests/test_market_data.py tests/test_indexer_canonical.py tests/test_http_api.py
+node --test tests/test_static_ui.test.mjs
+node --check app/static/explorer.js
+node --check app/static/research.js
 python3 -m compileall -q app tests
 ```
 
