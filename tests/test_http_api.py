@@ -120,6 +120,11 @@ def data(base, path, method="GET"):
 def test_static_assets_are_served_and_safe(api_server):
     for path, ctype in [
         ("/", "text/html"),
+        ("/markets.html", "text/html"),
+        ("/landing.js", "application/javascript"),
+        ("/landing.css", "text/css"),
+        ("/exchanges.html", "text/html"),
+        ("/exchanges.js", "application/javascript"),
         ("/styles.css", "text/css"),
         ("/explorer.js", "application/javascript"),
         ("/research.js", "application/javascript"),
@@ -150,7 +155,10 @@ def test_static_assets_are_served_and_safe(api_server):
         assert headers["X-Content-Type-Options"] == "nosniff"
         assert headers["Cache-Control"] == "no-store"
         assert len(body) > 20
-    _, headers, page = request(api_server, "/")
+    _, headers, landing = request(api_server, "/")
+    assert b"landing.js" in landing
+    assert b"markets.html" in landing
+    _, _, page = request(api_server, "/markets.html")
     assert b"explorer.js" in page
     assert b"research.js" in page
     assert "script-src 'self'" in headers["Content-Security-Policy"]
