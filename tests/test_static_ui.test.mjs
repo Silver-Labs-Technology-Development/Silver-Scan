@@ -2,7 +2,8 @@ import { readFileSync } from 'node:fs'
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 
-const page = readFileSync('app/static/index.html', 'utf8')
+const page = readFileSync('app/static/markets.html', 'utf8')
+const landing = readFileSync('app/static/index.html', 'utf8')
 const css = readFileSync('app/static/styles.css', 'utf8')
 const explorer = readFileSync('app/static/explorer.js', 'utf8')
 const research = readFileSync('app/static/research.js', 'utf8')
@@ -10,7 +11,7 @@ const research = readFileSync('app/static/research.js', 'utf8')
 test('SilverScan shares a consistent navigation shell across all visible pages',()=>{
   const shell=readFileSync('app/static/site-shell.js','utf8');
   const shellCSS=readFileSync('app/static/site-shell.css','utf8');
-  const files=['index.html','coin-watch.html','news.html','mining.html','insights.html','compare.html','universal-explorer.html','features.html','feature-detail.html'];
+  const files=['index.html','markets.html','exchanges.html','coin-watch.html','news.html','mining.html','insights.html','compare.html','universal-explorer.html','features.html','feature-detail.html'];
   for(const name of files){
     const content=readFileSync('app/static/'+name,'utf8');
     assert.match(content,/src="\.\/site-shell\.js"/);
@@ -216,4 +217,26 @@ test('Cloudflare-hosted exchange directory has shared navigation and separated s
   assert.match(js,/\/api\/exchanges\/cmc/);
   assert.match(js,/\/api\/exchanges\/coingecko/);
   assert.doesNotMatch(js,/innerHTML\s*=/);
+});
+
+
+test('new SilverScan cloud landing page links to the preserved full markets terminal and all major hubs',()=>{
+  const script=readFileSync('app/static/landing.js','utf8');
+  const style=readFileSync('app/static/landing.css','utf8');
+  const nav=readFileSync('app/static/site-shell.js','utf8');
+  assert.match(landing,/src="\.\/site-shell\.js"/);
+  assert.match(landing,/id="landing-market-rows"/);
+  assert.match(landing,/id="landing-cap"/);
+  assert.match(landing,/href="\.\/markets\.html"/);
+  assert.match(landing,/href="\.\/exchanges\.html"/);
+  assert.match(landing,/href="\.\/mining\.html#pool-market"/);
+  assert.match(landing,/href="\.\/universal-explorer\.html"/);
+  assert.match(script,/\/api\/market\/global/);
+  assert.match(script,/\/api\/coinlore\/markets/);
+  assert.doesNotMatch(script,/innerHTML\s*=/);
+  assert.match(style,/@media\(max-width:570px\)/);
+  assert.match(page,/id="research-view"/);
+  assert.match(page,/src="\.\/research\.js"/);
+  assert.match(nav,/href="\.\/markets\.html#markets"/);
+  assert.match(nav,/data-ss-section="home"/);
 });
