@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head><script src="./site-shell.js" defer></script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0e1e31">
+  <meta name="description" content="Live cryptocurrency market prices and charts at SilverScan, with separate Coin Watch, mining, and exchange research.">
+  <title>Live Cryptocurrency Markets — SilverScan</title>
+  <link rel="stylesheet" href="./styles.css">
+  <script type="module" src="./explorer.js"></script>
+  <script type="module" src="./research.js"></script>
+<link rel="stylesheet" href="./theme.css"><script src="./alpha.js" defer></script><link rel="stylesheet" href="./site-shell.css"></head>
+<body>
+  <a class="skip-link" href="#research-view">Skip to main content</a>
+  <div class="utility-bar">
+    <div class="shell utility-inner">
+      <div class="utility-stats" aria-label="Crypto market totals">
+        <span>Cryptocurrencies <strong id="market-coins">—</strong></span>
+        <span>Market Cap <strong id="market-cap-top">—</strong></span>
+        <span>24h Volume <strong id="market-volume-top">—</strong></span>
+        <span>BTC Dominance <strong id="market-btc-top">—</strong></span>
+      </div>
+      <span class="utility-source" id="market-source-top">Data: CoinGecko · loading</span>
+    </div>
+  </div>
+  <header class="site-header" role="banner"></header>
+  <div class="shell workspace">
+    <div class="page-intro" id="page-intro">
+      <div>
+        <div class="section-kicker"><span class="status-indicator"></span> SILVERSCAN / RESEARCH CENTER</div>
+        <h1 id="page-title">Cryptocurrency Prices by Market Cap</h1>
+        <p id="page-description" class="muted">Research markets and blockchain activity across multiple providers. <a href="./coin-watch.html">Explore low-ranked coins and tokens, including BTCS →</a></p>
+      </div>
+      <aside class="intro-side ss-source-aside">
+      <span class="tiny-label">MARKET FEED</span>
+      <strong id="data-state">Checking market data</strong>
+      <small id="last-updated">Updated: —</small>
+      <details class="ss-source-details" id="ss-source-details">
+        <summary aria-label="Show data source status"><span class="ss-source-dot" aria-hidden="true"></span><span id="ss-source-count">5 data sources</span><span aria-hidden="true">⌄</span></summary>
+        <div class="ss-sources-popover">
+          <div class="ss-sources-top">
+            <strong>Data sources</strong>
+            <button id="refresh-sources" type="button" aria-label="Refresh data source statuses">Refresh</button>
+          </div>
+          <div id="sources-status" class="ss-sources-rows" aria-live="polite">
+            <p>Checking provider access…</p>
+          </div>
+          <small class="ss-source-note">Provider counts overlap. Not every feed is connected; a listing is not a verified coin.</small>
+        </div>
+      </details>
+    </aside>
+    </div>
+    
+    <section id="market-overview" class="market-overview" aria-label="Global market statistics">
+      <div class="metric-card">
+        <span class="metric-label">Global Market Cap</span>
+        <strong id="metric-cap">—</strong>
+        <span id="metric-cap-change" class="metric-sub">Awaiting provider</span>
+      </div>
+      <div class="metric-card">
+        <span class="metric-label">24h Trading Volume</span>
+        <strong id="metric-volume">—</strong>
+        <span class="metric-sub">Aggregated external markets</span>
+      </div>
+      <div class="metric-card">
+        <span class="metric-label">Bitcoin Dominance</span>
+        <strong id="metric-btc">—</strong>
+        <span class="metric-sub">Share of market capitalization</span>
+      </div>
+      <div class="metric-card">
+        <span class="metric-label">Tracked Cryptocurrencies</span>
+        <strong id="metric-coins">—</strong>
+        <span class="metric-sub">Reported by data provider</span>
+      </div>
+    </section>
+    <section id="explorer-controls" class="explorer-controls" hidden aria-label="Explorer search">
+      <form id="explorer-search" class="explorer-search">
+        <label for="q">Explore Bitcoin Silver L1</label>
+        <div class="explorer-input">
+          <input id="q" name="q" required maxlength="128" autocomplete="off" placeholder="Search block height, block hash, transaction ID or address">
+          <button type="submit">Search chain</button>
+        </div>
+      </form>
+      <div class="network-pick"><label for="net">Network</label><select id="net"><option>Loading networks…</option></select></div>
+    </section>
+    <main id="research-view" aria-live="polite">
+      <div class="loading-panel">Loading market data…</div>
+    </main>
+    <main id="view" hidden aria-live="polite"><div class="loading-panel">Checking node connection…</div></main>
+    <div class="scan-hub-promo"><div><p class="eyebrow">DISCOVER MORE</p><h2>Beyond market-cap rankings.</h2><p>Bitcoin Silver is available by unique CoinGecko ID even when it ranks outside the first thousand. Search the full catalog, browse CoinMarketCap markets, Coinbase spot pairs, read crypto news and compare mining assumptions.</p></div><a href="./coin-watch.html">Explore Coin Watch →</a></div><div class="data-disclaimer">
+      <strong>SilverScan is an independent Silver Labs product.</strong> Prices and DEX data are attributed external research, not SilvEx trades. The BTCS L1 explorer is a node-backed development implementation. Market listing does not verify token legitimacy or promise trading, mining rewards, settlement or custody.
+    </div>
+  </div>
+  <footer class="site-footer">
+    <div class="shell footer-content">
+      <div><strong>SILVERSCAN</strong><p>One research workspace. Multiple networks. Verifiable sources.</p></div>
+      <div class="footer-links">
+        <a href="https://github.com/Silver-Labs-Technology-Development/Silver-Scan" target="_blank" rel="noopener noreferrer">Source & roadmap</a>
+        <a href="https://www.coingecko.com/" target="_blank" rel="noopener noreferrer">Market data: CoinGecko</a>
+        <a href="./coin-watch.html">News &amp; Coin Universe</a>
+        <a href="https://dexscreener.com/" target="_blank" rel="noopener noreferrer">DEX data: DEX Screener</a>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>
