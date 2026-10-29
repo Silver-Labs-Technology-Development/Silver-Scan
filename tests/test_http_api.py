@@ -117,6 +117,11 @@ def test_static_assets_are_served_and_safe(api_server):
         ("/data-hub.html", "text/html"),
         ("/data-hub.css", "text/css"),
         ("/data-hub.js", "application/javascript"),
+        ("/coin-watch.html", "text/html"),
+        ("/news.html", "text/html"),
+        ("/mining.html", "text/html"),
+        ("/theme.css", "text/css"),
+        ("/theme.js", "application/javascript"),
     ]:
         status, headers, body = request(api_server, path)
         assert status == 200
@@ -232,3 +237,31 @@ def test_source_coverage_low_rank_btcs_news_and_mining_routes(api_server):
     assert status == 200 and calc["electricity_usd_per_day"] == pytest.approx(1.2)
     status, _, invalid = data(api_server, "/api/mining/estimate?miner_hashrate_hps=x")
     assert status == 400 and "error" in invalid
+
+
+def test_silverscan_market_page_sizes_watch_quotes_and_pool_registry(api_server):
+    for limit in (25, 50, 100, 200):
+        status, _, market = data(api_server, f"/api/catalog/page?page=2&limit={limit}")
+        assert status == 200
+        assert market["page"] == 2
+        assert market["limit"] == limit
+    status, _, bad = data(api_server, "/api/catalog/page?page=1&limit=251")
+    assert status == 400 and "error" in bad
+
+    # No public pool is implied by a disabled staging profile.
+    status, _, pool = data(api_server, "/api/mining/coins")
+    assert status == 200
+    assert pool["active_public_pool_coins"] == 0
+    assert pool["ready_for_real_payouts"] is False
+    assert [c["id"] for c in pool["coins"]] == ["btcs", "btc", "bch", "ltc", "doge"]
+    assert all(c["payouts_enabled"] is False for c in pool["coins"])
+    assert all(c["network_hashrate_hps"] is None for c in pool["coins"])
+
+    # Quotes preserve the unique CoinGecko ID, not ambiguous ticker symbols.
+    status, _, watch = data(api_server, "/api/coin-watch/quotes?ids=bitcoin-silver-2")
+    assert status == 200
+    assert watch["source"] == "CoinGecko"
+    status, _, missing = data(api_server, "/api/coin-watch/quotes?ids=")
+    assert status == 400 and "error" in missing
+    status, _, too_many = data(api_server, "/api/coin-watch/quotes?ids=" + ",".join(["bitcoin"] * 51))
+    assert status == 400 and "error" in too_many
