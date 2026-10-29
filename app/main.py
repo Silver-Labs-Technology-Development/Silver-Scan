@@ -158,6 +158,12 @@ class Handler(BaseHTTPRequestHandler):
         if path in ("/coin-watch.html", "/news.html", "/mining.html"):
             self._static(path.lstrip("/"), "text/html; charset=utf-8")
             return
+        if path == "/site-shell.js":
+            self._static("site-shell.js", "application/javascript; charset=utf-8")
+            return
+        if path == "/site-shell.css":
+            self._static("site-shell.css", "text/css; charset=utf-8")
+            return
         if path == "/theme.css":
             self._static("theme.css", "text/css; charset=utf-8")
             return
