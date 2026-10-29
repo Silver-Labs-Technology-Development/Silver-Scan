@@ -10,19 +10,19 @@ prototype with a developing multi-coin market research terminal.
 
 **The actual user-provided dashboard URL is for Cloudflare Workers, not Pages.**
 Use the existing Worker named `silver-scan` and the production branch
-`public-alpha`. The Workers-specific configuration in
+`main`. The Workers-specific configuration in
 [`wrangler.worker.toml`](wrangler.worker.toml) provides static assets, a
 restricted Cloudflare API and server-side `ASSETS` binding. See
 [`docs/CLOUDFLARE-WORKERS-ALPHA.md`](docs/CLOUDFLARE-WORKERS-ALPHA.md)
 for GitHub connection, build command, security verification and monitoring.
 
-The older Pages configuration remains separate; **do not create a duplicate
+The optional Pages configuration remains separate; **do not create a duplicate
 Pages project** when releasing to the existing Worker.
 
 ## Cloudflare public viewing alpha
 
-The intended Cloudflare Pages production branch is **`public-alpha`**,
-separate from the actively developed GitHub PR branch. The site is static
+The canonical GitHub and Cloudflare Workers production branch is **`main`**,
+separate from active local development worktrees and feature PR branches. The site is static
 HTML/CSS/JavaScript with a narrow Cloudflare Pages Function in
 [`app/static/_worker.js`](app/static/_worker.js); **it does not run the
 local Python account database or node RPC backend**.
