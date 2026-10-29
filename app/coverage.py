@@ -449,6 +449,42 @@ def cg_exchanges(page=1,limit=30):
             "note":"External exchange information, not Silver Labs recommendations, a safety certification, or SilvEx trade volume."}
 
 
+def cmc_exchange_map(page=1,limit=50):
+    """Active exchange identities, NOT CMC volume/trust rankings.
+
+    The CMC /exchange/listings/latest metrics require Growth tier or above.
+    Keyless /exchange/map returns exchange identities and tracked status only.
+    """
+    if type(page) is not int or not 1<=page<=100:
+        raise ValueError("page must be 1–100")
+    if type(limit) is not int or not 1<=limit<=100:
+        raise ValueError("limit must be 1–100")
+    key=os.getenv("CMC_API_KEY","").strip()
+    start=(page-1)*limit+1
+    base=CMC+("/v1/exchange/map" if key else "/public-api/v1/exchange/map")
+    url=base+"?"+urlencode({"start":start,"limit":limit,"listing_status":"active"})
+    def load():
+        value=_fetch(url,headers={"X-CMC_PRO_API_KEY":key} if key else {})
+        if not isinstance(value,dict) or not isinstance(value.get("data"),list):
+            raise M.ProviderUnavailable("CMC exchange identity map unavailable")
+        return value
+    raw,ts,stale=_memo(f"cmc:exchange-map:{page}:{limit}:{bool(key)}",load,900,3600)
+    out=[]
+    for item in raw["data"]:
+        if not isinstance(item,dict) or type(item.get("id")) is not int:continue
+        out.append({"id":"coinmarketcap:"+str(item["id"]),
+                    "name":str(item.get("name") or "")[:120],
+                    "slug":str(item.get("slug") or "")[:120],
+                    "tracked":item.get("is_active")==1,
+                    "status":str(item.get("status") or "unknown")[:30],
+                    "rank":None,"volume_24h_btc":None,"trust_score":None,
+                    "is_redistributable":item.get("is_redistributable")==1})
+    return {"source":"CoinMarketCap /v1/exchange/map","exchanges":out,
+            "fetched_at":ts,"stale":stale,"page":page,"limit":limit,
+            "has_more":len(raw["data"])==limit,
+            "note":"CMC exchange map contains provider identity and tracked state, not exchange volume or trust rankings. Paid listings/quotes access and redistribution rights must be separately verified."}
+
+
 def cg_defi():
     """Global DeFi reference statistics supplied by CoinGecko."""
     def load():
