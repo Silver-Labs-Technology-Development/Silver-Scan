@@ -197,16 +197,17 @@ function tableCoinRows(coins){
   coins.forEach((coin)=>{
     const tr=el('tr');
     const td=val=>{const item=el('td');if(val instanceof Node)item.append(val);else item.textContent=String(val??'—');tr.append(item);return item;};
-    td(star(coin));
+    td(coin.rank??'—');
     const cell=td('');
     const name=button(coin.name||coin.provider_id,()=>openAsset(coin.provider_id),'coin-button');
     const text=wrap('coin-text',name,el('span',(coin.symbol||'—').toUpperCase(),'ticker'));
     cell.append(wrap('coin-cell',icon(coin),text));
-    td(coin.rank??'—');td(money(coin.price_usd));
+    td(money(coin.price_usd));
     td(change(coin.change_1h_pct));td(change(coin.change_24h_pct));td(change(coin.change_7d_pct));
     td(usdCompact(coin.market_cap_usd));td(usdCompact(coin.volume_24h_usd));
     td(count(coin.circulating_supply));
     td(sparkline(coin.sparkline_7d,coin.change_7d_pct));
+    td(star(coin));
     tbody.append(tr);
   });
   return tbody;
@@ -262,7 +263,7 @@ function buildMarketTable(){
   holder.append(wrap('table-toolbar',title,controls));
   const table=el('table',null,'market-table');
   const head=el('thead');const tr=el('tr');
-  ['Watch','Coin','Rank','Price','1h %','24h %','7d %','Market cap','24h volume','Circulating supply','Last 7 days'].forEach(name=>tr.append(el('th',name)));
+  ['#','Coin','Price','1h %','24h %','7d %','Market cap','24h volume','Circulating supply','Last 7 days','Watch'].forEach(name=>tr.append(el('th',name)));
   head.append(tr);table.append(head,tableCoinRows(shown));
   holder.append(wrap('table-scroll',table));
   if(!shown.length)holder.append(el('p',state.tab==='watch'?'No watched coins in the provider top-100 snapshot. Watch assets with the star icon.':'No assets matched your filter.','empty-panel'));
