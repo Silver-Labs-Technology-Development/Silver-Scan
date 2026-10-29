@@ -1,0 +1,481 @@
+{
+  "schema_version": 1,
+  "baseline_source": "Silver-Scan main app/static/features.html; source statuses are UI labels, not independent test evidence",
+  "production_policy": "Do not change existing Cloudflare UI, deploy or merge without explicit approval",
+  "status_values": [
+    "preview",
+    "partial",
+    "planned",
+    "verified"
+  ],
+  "baseline": [
+    {
+      "id": "crypto-rankings",
+      "name": "Crypto rankings",
+      "category": "markets",
+      "display_status": "preview",
+      "verified_implementation": false,
+      "source": "existing-feature-page"
+    },
+    {
+      "id": "coin-profiles-and-charts",
+      "name": "Coin profiles & charts",
+      "category": "markets",
+      "display_status": "preview",
+      "verified_implementation": false,
+      "source": "existing-feature-page"
+    },
+    {
+      "id": "fear-and-greed",
+      "name": "Fear & Greed",
+      "category": "markets",
+      "display_status": "preview",
+      "verified_implementation": false,
+      "source": "existing-feature-page"
+    },
+    {
+      "id": "dominance-and-global-metrics",
+      "name": "Dominance & global metrics",
+      "category": "markets",
+      "display_status": "preview",
+      "verified_implementation": false,
+      "source": "existing-feature-page"
+    },
+    {
+      "id": "coin-watch",
+      "name": "Coin Watch",
+      "category": "markets",
+      "display_status": "preview",
+      "verified_implementation": false,
+      "source": "existing-feature-page"
+    },
+    {
+      "id": "performance-heatmap",
+      "name": "Performance heatmap",
+      "category": "markets",
+      "display_status": "preview",
+      "verified_implementation": false,
+      "source": "existing-feature-page"
+    },
+    {
+      "id": "trending-and-categories",
+      "name": "Trending & categories",
+      "category": "markets",
+      "display_status": "preview",
+      "verified_implementation": false,
+      "source": "existing-feature-page"
+    },
+    {
+      "id": "exchanges-and-liquidity",
+      "name": "Exchanges & liquidity",
+      "category": "markets",
+      "display_status": "preview",
+      "verified_implementation": false,
+      "source": "existing-feature-page"
+    },
+    {
+      "id": "compare-coins",
+      "name": "Compare coins",
+      "category": "markets",
+      "display_status": "preview",
+      "verified_implementation": false,
+      "source": "existing-feature-page"
+    },
+    {
+      "id": "crypto-news",
+      "name": "Crypto News",
+      "category": "markets",
+      "display_status": "preview",
+      "verified_implementation": false,
+      "source": "existing-feature-page"
+    },
+    {
+      "id": "portfolio-analytics-and-alerts",
+      "name": "Portfolio analytics & alerts",
+      "category": "markets",
+      "display_status": "preview",
+      "verified_implementation": false,
+      "source": "existing-feature-page"
+    },
+    {
+      "id": "btcs-network-mining",
+      "name": "BTCS network mining",
+      "category": "mining",
+      "display_status": "partial",
+      "verified_implementation": false,
+      "source": "existing-feature-page"
+    },
+    {
+      "id": "mining-pool-directory",
+      "name": "Mining pool directory",
+      "category": "mining",
+      "display_status": "planned",
+      "verified_implementation": false,
+      "source": "existing-feature-page"
+    },
+    {
+      "id": "multi-coin-algorithms",
+      "name": "Multi-coin algorithms",
+      "category": "mining",
+      "display_status": "planned",
+      "verified_implementation": false,
+      "source": "existing-feature-page"
+    },
+    {
+      "id": "blocks-and-confirmations",
+      "name": "Blocks & confirmations",
+      "category": "mining",
+      "display_status": "partial",
+      "verified_implementation": false,
+      "source": "existing-feature-page"
+    },
+    {
+      "id": "silver-pool-integration",
+      "name": "Silver Pool integration",
+      "category": "mining",
+      "display_status": "planned",
+      "verified_implementation": false,
+      "source": "existing-feature-page"
+    },
+    {
+      "id": "pow-s-research",
+      "name": "PoW-S research",
+      "category": "mining",
+      "display_status": "planned",
+      "verified_implementation": false,
+      "source": "existing-feature-page"
+    },
+    {
+      "id": "btcs-l1-explorer",
+      "name": "BTCS L1 explorer",
+      "category": "blockchains",
+      "display_status": "partial",
+      "verified_implementation": false,
+      "source": "existing-feature-page"
+    },
+    {
+      "id": "multi-chain-explorer-adapters",
+      "name": "Multi-chain explorer adapters",
+      "category": "blockchains",
+      "display_status": "planned",
+      "verified_implementation": false,
+      "source": "existing-feature-page"
+    },
+    {
+      "id": "addresses-and-balances",
+      "name": "Addresses & balances",
+      "category": "blockchains",
+      "display_status": "partial",
+      "verified_implementation": false,
+      "source": "existing-feature-page"
+    },
+    {
+      "id": "token-holders",
+      "name": "Token holders",
+      "category": "blockchains",
+      "display_status": "planned",
+      "verified_implementation": false,
+      "source": "existing-feature-page"
+    },
+    {
+      "id": "smart-contracts-and-verification",
+      "name": "Smart contracts & verification",
+      "category": "blockchains",
+      "display_status": "planned",
+      "verified_implementation": false,
+      "source": "existing-feature-page"
+    },
+    {
+      "id": "nfts-and-collections",
+      "name": "NFTs & collections",
+      "category": "blockchains",
+      "display_status": "planned",
+      "verified_implementation": false,
+      "source": "existing-feature-page"
+    },
+    {
+      "id": "gas-and-network-fees",
+      "name": "Gas & network fees",
+      "category": "blockchains",
+      "display_status": "planned",
+      "verified_implementation": false,
+      "source": "existing-feature-page"
+    },
+    {
+      "id": "cross-chain-relationships",
+      "name": "Cross-chain relationships",
+      "category": "blockchains",
+      "display_status": "planned",
+      "verified_implementation": false,
+      "source": "existing-feature-page"
+    },
+    {
+      "id": "dex-scan-pairs",
+      "name": "DEX Scan pairs",
+      "category": "defi",
+      "display_status": "preview",
+      "verified_implementation": false,
+      "source": "existing-feature-page"
+    },
+    {
+      "id": "liquidity-monitoring",
+      "name": "Liquidity monitoring",
+      "category": "defi",
+      "display_status": "planned",
+      "verified_implementation": false,
+      "source": "existing-feature-page"
+    },
+    {
+      "id": "new-pools-and-token-discovery",
+      "name": "New pools & token discovery",
+      "category": "defi",
+      "display_status": "planned",
+      "verified_implementation": false,
+      "source": "existing-feature-page"
+    },
+    {
+      "id": "whale-and-wallet-flows",
+      "name": "Whale & wallet flows",
+      "category": "defi",
+      "display_status": "planned",
+      "verified_implementation": false,
+      "source": "existing-feature-page"
+    },
+    {
+      "id": "defi-protocols-and-tvl",
+      "name": "DeFi protocols & TVL",
+      "category": "defi",
+      "display_status": "planned",
+      "verified_implementation": false,
+      "source": "existing-feature-page"
+    },
+    {
+      "id": "global-defi-overview",
+      "name": "Global DeFi overview",
+      "category": "defi",
+      "display_status": "preview",
+      "verified_implementation": false,
+      "source": "existing-feature-page"
+    },
+    {
+      "id": "swap-routes",
+      "name": "Swap routes",
+      "category": "defi",
+      "display_status": "planned",
+      "verified_implementation": false,
+      "source": "existing-feature-page"
+    },
+    {
+      "id": "rich-project-profiles",
+      "name": "Rich project profiles",
+      "category": "ecosystem",
+      "display_status": "planned",
+      "verified_implementation": false,
+      "source": "existing-feature-page"
+    },
+    {
+      "id": "sponsored-project-billboards",
+      "name": "Sponsored project billboards",
+      "category": "ecosystem",
+      "display_status": "planned",
+      "verified_implementation": false,
+      "source": "existing-feature-page"
+    },
+    {
+      "id": "campaign-analytics",
+      "name": "Campaign analytics",
+      "category": "ecosystem",
+      "display_status": "planned",
+      "verified_implementation": false,
+      "source": "existing-feature-page"
+    },
+    {
+      "id": "silver-labs-ecosystem",
+      "name": "Silver Labs ecosystem",
+      "category": "ecosystem",
+      "display_status": "partial",
+      "verified_implementation": false,
+      "source": "existing-feature-page"
+    },
+    {
+      "id": "listings-and-integration-reviews",
+      "name": "Listings & integration reviews",
+      "category": "ecosystem",
+      "display_status": "planned",
+      "verified_implementation": false,
+      "source": "existing-feature-page"
+    },
+    {
+      "id": "developer-apis-and-status",
+      "name": "Developer APIs & status",
+      "category": "ecosystem",
+      "display_status": "planned",
+      "verified_implementation": false,
+      "source": "existing-feature-page"
+    }
+  ],
+  "proposals": [
+    {
+      "id": "historical-market-snapshots",
+      "name": "Historical market snapshots",
+      "category": "markets",
+      "display_status": "planned",
+      "verified_implementation": false,
+      "acceptance_summary": "Store daily source-attributed price and rank observations; never imply a complete history.",
+      "source": "new-silverscan-proposal"
+    },
+    {
+      "id": "dedicated-gainers-and-losers",
+      "name": "Dedicated gainers and losers",
+      "category": "markets",
+      "display_status": "planned",
+      "verified_implementation": false,
+      "acceptance_summary": "Calculate only from comparable observed samples over an explicit window.",
+      "source": "new-silverscan-proposal"
+    },
+    {
+      "id": "recently-discovered-assets",
+      "name": "Recently discovered assets",
+      "category": "markets",
+      "display_status": "planned",
+      "verified_implementation": false,
+      "acceptance_summary": "Record first-observed timestamp per verified chain/contract identity.",
+      "source": "new-silverscan-proposal"
+    },
+    {
+      "id": "altcoin-market-breadth",
+      "name": "Altcoin market breadth",
+      "category": "markets",
+      "display_status": "planned",
+      "verified_implementation": false,
+      "acceptance_summary": "Document eligibility, exclusions and methodology; avoid cloning proprietary indexes.",
+      "source": "new-silverscan-proposal"
+    },
+    {
+      "id": "fiat-and-crypto-conversion",
+      "name": "Fiat and crypto conversion",
+      "category": "markets",
+      "display_status": "planned",
+      "verified_implementation": false,
+      "acceptance_summary": "Use cited observed rates and a clear valuation timestamp; no trading.",
+      "source": "new-silverscan-proposal"
+    },
+    {
+      "id": "category-rotation-dashboards",
+      "name": "Category rotation dashboards",
+      "category": "markets",
+      "display_status": "planned",
+      "verified_implementation": false,
+      "acceptance_summary": "Show sector changes from transparent coin tagging and timestamped prices.",
+      "source": "new-silverscan-proposal"
+    },
+    {
+      "id": "advanced-portfolio-cost-basis",
+      "name": "Advanced portfolio cost basis",
+      "category": "markets",
+      "display_status": "planned",
+      "verified_implementation": false,
+      "acceptance_summary": "Read-only multi-ledger P/L with explicit basis method and local privacy controls.",
+      "source": "new-silverscan-proposal"
+    },
+    {
+      "id": "multiple-watchlists-and-alerts",
+      "name": "Multiple watchlists and alerts",
+      "category": "markets",
+      "display_status": "planned",
+      "verified_implementation": false,
+      "acceptance_summary": "User-defined lists and optional threshold notices; no auto-trading.",
+      "source": "new-silverscan-proposal"
+    },
+    {
+      "id": "exchange-order-book-depth",
+      "name": "Exchange order book depth",
+      "category": "markets",
+      "display_status": "planned",
+      "verified_implementation": false,
+      "acceptance_summary": "Read permitted books, calculate visible depth and spread with quality caveats.",
+      "source": "new-silverscan-proposal"
+    },
+    {
+      "id": "cross-venue-price-comparisons",
+      "name": "Cross-venue price comparisons",
+      "category": "markets",
+      "display_status": "planned",
+      "verified_implementation": false,
+      "acceptance_summary": "Only compare assets after verified asset identity and quote-currency normalization.",
+      "source": "new-silverscan-proposal"
+    },
+    {
+      "id": "stablecoin-issuance-and-supply",
+      "name": "Stablecoin issuance and supply",
+      "category": "markets",
+      "display_status": "planned",
+      "verified_implementation": false,
+      "acceptance_summary": "Track on-chain mint/burn observations per verified contract; avoid claiming reserves.",
+      "source": "new-silverscan-proposal"
+    },
+    {
+      "id": "token-unlock-and-vesting-calendar",
+      "name": "Token unlock and vesting calendar",
+      "category": "blockchains",
+      "display_status": "planned",
+      "verified_implementation": false,
+      "acceptance_summary": "Only publish independently verifiable on-chain events or attributed project documentation.",
+      "source": "new-silverscan-proposal"
+    },
+    {
+      "id": "token-contract-risk-signals",
+      "name": "Token contract risk signals",
+      "category": "blockchains",
+      "display_status": "planned",
+      "verified_implementation": false,
+      "acceptance_summary": "Read-only privileged-role, mint authority and upgradeability flags with disclaimers.",
+      "source": "new-silverscan-proposal"
+    },
+    {
+      "id": "chain-activity-analytics",
+      "name": "Chain activity analytics",
+      "category": "blockchains",
+      "display_status": "planned",
+      "verified_implementation": false,
+      "acceptance_summary": "Track observed transactions, fees, block times, throughput and index coverage.",
+      "source": "new-silverscan-proposal"
+    },
+    {
+      "id": "verified-exchange-reserve-addresses",
+      "name": "Verified exchange reserve addresses",
+      "category": "blockchains",
+      "display_status": "planned",
+      "verified_implementation": false,
+      "acceptance_summary": "Display independently proven signed/identified addresses; no solvency claims.",
+      "source": "new-silverscan-proposal"
+    },
+    {
+      "id": "crypto-event-calendar",
+      "name": "Crypto event calendar",
+      "category": "ecosystem",
+      "display_status": "planned",
+      "verified_implementation": false,
+      "acceptance_summary": "Attributed event, protocol update and token governance schedules.",
+      "source": "new-silverscan-proposal"
+    },
+    {
+      "id": "education-and-glossary",
+      "name": "Education and glossary",
+      "category": "ecosystem",
+      "display_status": "planned",
+      "verified_implementation": false,
+      "acceptance_summary": "Original explanations of blockchain, market and wallet terminology.",
+      "source": "new-silverscan-proposal"
+    },
+    {
+      "id": "data-quality-and-methodology-page",
+      "name": "Data quality and methodology page",
+      "category": "ecosystem",
+      "display_status": "planned",
+      "verified_implementation": false,
+      "acceptance_summary": "Explain sources, stale data, index completeness, verification and calculation definitions.",
+      "source": "new-silverscan-proposal"
+    }
+  ]
+}
