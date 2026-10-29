@@ -1,0 +1,10 @@
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  X-Frame-Options: DENY
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()
+  X-Robots-Tag: noindex, nofollow
+  Content-Security-Policy: default-src 'self'; script-src 'self' https://static.cloudflareinsights.com; connect-src 'self' https://cloudflareinsights.com https://www.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://coin-images.coingecko.com https://assets.coingecko.com https://www.coindesk.com https://www.coindeskcdn.com https://cointelegraph.com https://decrypt.co https://www.theblock.co https://bitcoinmagazine.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'
+
+/*.html
+  Cache-Control: public, max-age=60
