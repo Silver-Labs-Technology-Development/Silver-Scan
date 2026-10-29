@@ -7,7 +7,7 @@ evidence that Cloudflare has published the site.
 ## Intended deployment
 
 - Repo: `Silver-Labs-Technology-Development/Silver-Scan`.
-- Production branch: `public-alpha` (separate from `main` and active development PR).
+- Production branch: `main` (the canonical website source; development stays in separate worktrees and PRs).
 - Cloudflare Pages project: `silver-scan` or the existing project owned by Silver Labs.
 - Root directory: repository root.
 - Framework: None / static site.
@@ -26,7 +26,7 @@ SilverScan project is already connected. First inspect its production branch.
 
 1. In Cloudflare Dashboard → Workers & Pages, open the SilverScan Pages project.
    If none exists, create a Pages project with **Connect to Git**, authorize
-   access to the `Silver-Scan` repository, and choose `public-alpha` as the
+   access to the `Silver-Scan` repository, and choose `main` as the
    production branch. Do not select the mining pool project.
 2. Verify the build output directory is `app/static`. Use the repo root and
    no build command. The site has no Python server dependency for public alpha.
@@ -94,7 +94,7 @@ provider IDs and limit page sizes. Upstream requests use fixed HTTPS origins.
   until separately authenticated, authorized and security-reviewed.
 - Keep `X-Robots-Tag: noindex` during alpha; switch search indexing deliberately
   after auditing information accuracy and commercial licensing.
-- Deploy stable commits to `public-alpha`, not an unreviewed working branch.
+- Deploy stable commits to `main`, not an unreviewed working branch.
   Every subsequent push to a Git-connected production branch deploys automatically
   via Cloudflare Pages; the user's computer is not part of runtime hosting.
 - Keep `main` and the local repositories unmodified by release previews.
